@@ -1401,7 +1401,7 @@ const SND={
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 let P,E,stage,deck,cur,locked,timerId,timeLeft,TIME=13,stats,startTime,chosen=null,qStart;
 /* 每題答完後的解說停留時間（毫秒）。答錯給更久，因為要讀解說 */
-const FB_OK=4200, FB_BAD=12400, FB_LEVEL=4000;
+const FB_OK=4200, FB_BAD=6200, FB_LEVEL=4000;
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 
 
