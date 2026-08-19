@@ -191,7 +191,7 @@ body{
 #pickInfo b{color:var(--gold)}
 
 /* 結算 */
-#report{max-width:700px;width:100%;text-align:left;margin-top:12px}
+#report,#midReport{max-width:700px;width:100%;text-align:left;margin-top:12px}
 .sect{font-size:11.5px;letter-spacing:3px;color:var(--gold);margin:15px 0 8px;font-weight:900;
   border-bottom:2px solid rgba(255,201,60,.35);padding-bottom:4px}
 .rowline{display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border-radius:8px;
@@ -209,7 +209,7 @@ body{
 .advice b{color:#fda4af}
 .good{background:rgba(46,204,113,.14);border-left-color:var(--ok);color:#dcfce7}
 .good b{color:#86efac}
-#wrongList{max-height:230px;overflow-y:auto;padding-right:4px}
+.wrongList{max-height:230px;overflow-y:auto;padding-right:4px}
 .wq{font-size:12.5px;padding:9px 13px;border-radius:8px;background:rgba(255,250,240,.07);
   margin-bottom:6px;line-height:1.7;color:#e8eef8;border-left:4px solid var(--bad)}
 .wq .tag{display:inline-block;font-size:9.5px;background:var(--gold);color:var(--ink);
@@ -448,6 +448,15 @@ body{
       <button class="btn ghost" id="btnBackTitle">← 返回</button>
       <button class="btn" id="btnStart" disabled>▶ 開始特訓</button>
     </div>
+  </div>
+
+  <!-- ===== 中場檢討（進 BOSS 前） ===== -->
+  <div class="screen hide" id="scMid">
+    <div class="jp">インターミッション · 中間報告</div>
+    <h2 style="color:#ffc93c">中場檢討</h2>
+    <p id="midSub"></p>
+    <div id="midReport"></div>
+    <button class="btn" id="btnToBoss">▶ 進入最終決戰</button>
   </div>
 
   <!-- ===== 結算 ===== -->
@@ -1392,7 +1401,7 @@ const SND={
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 let P,E,stage,deck,cur,locked,timerId,timeLeft,TIME=13,stats,startTime,chosen=null,qStart;
 /* 每題答完後的解說停留時間（毫秒）。答錯給更久，因為要讀解說 */
-const FB_OK=4200, FB_BAD=6200, FB_LEVEL=4000;
+const FB_OK=4200, FB_BAD=12400, FB_LEVEL=4000;
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 
 
@@ -1482,7 +1491,8 @@ function start(){
   $("#pName").textContent=P.n+" "+P.en;
   $("#skillTag").textContent="◆ "+P.skill;
   fitScene(); loadEnemy(); drawP();
-  $("#scTitle").classList.add("hide"); $("#scPick").classList.add("hide"); $("#scOver").classList.add("hide");
+  $("#scTitle").classList.add("hide"); $("#scPick").classList.add("hide");
+  $("#scOver").classList.add("hide"); $("#scMid").classList.add("hide");
   SND.play("normal");
   nextQ();
 }
@@ -1671,20 +1681,106 @@ function defeat(){
   P.hp=Math.min(P.max,P.hp+Math.round(P.max*.45));
   drawP();
   onomat("撃破！","#ffd93c"); burst(74,"#ffd93c");
-  $("#q").innerHTML="💥 敵機擊破！　<b>LEVEL UP</b> → LV "+P.lv+"（HP 回復・ATK +6・裝甲 +3%）";
+  const bossNext=(stage===ENEMIES.length-1);
+  $("#q").innerHTML=bossNext
+    ? "💥 五台敵機全數擊破！　<b>LEVEL UP</b> → LV "+P.lv+"　正在整理中場檢討…"
+    : "💥 敵機擊破！　<b>LEVEL UP</b> → LV "+P.lv+"（HP 回復・ATK +6・裝甲 +3%）";
   $("#opts").innerHTML=""; $("#exp").classList.remove("show");
   countdown(FB_LEVEL);
-  setTimeout(()=>{loadEnemy();nextQ()},FB_LEVEL);
+  setTimeout(()=>{ if(bossNext){showMid()} else {loadEnemy();nextQ()} },FB_LEVEL);
 }
 
 /* ============ 結算與檢討 ============ */
+/* 類別統計：正確率由低到高 */
+function catStats(){
+  return Object.entries(stats.byCat)
+    .map(([k,v])=>({k,r:v.r,w:v.w,n:v.r+v.w,p:v.r/(v.r+v.w)}))
+    .sort((a,b)=>a.p-b.p||b.n-a.n);
+}
+/* 產生檢討報告；final=true 為最終結算，false 為中場檢討 */
+function reportHTML(final){
+  const total=stats.right+stats.wrong;
+  const acc=total?stats.right/total:0;
+  const avg=stats.answered?(stats.timeSum/stats.answered):0;
+  const mins=Math.max(1,Math.round((Date.now()-startTime)/60000));
+  let h='<div class="sect">▍'+(final?"戰鬥紀錄":"目前戰況")+'</div>';
+  const rows=final?[
+    ["使用機體",P.n+" "+P.en+"（"+P.type+"）　LV "+P.lv],
+    ["答對 / 總題數",stats.right+" / "+total+"　正確率 "+Math.round(acc*100)+"%"],
+    ["最高連擊","COMBO x"+P.best],
+    ["平均作答時間",avg.toFixed(1)+" 秒 / 題"],
+    ["抵達關卡",(stage>=ENEMIES.length)?"全破 6 / 6":(stage+1)+" / 6"],
+    ["總作戰時間","約 "+mins+" 分鐘"]
+  ]:[
+    ["已擊破","5 台敵機　目前 LV "+P.lv],
+    ["答對 / 總題數",stats.right+" / "+total+"　正確率 "+Math.round(acc*100)+"%"],
+    ["最高連擊","COMBO x"+P.best],
+    ["平均作答時間",avg.toFixed(1)+" 秒 / 題"],
+    ["剩餘 HP",Math.max(0,Math.round(P.hp))+" / "+P.max],
+    ["下一關","最終魔神 GRAMMAROS（HP 760・裝甲 20）"]
+  ];
+  rows.forEach(r=>h+='<div class="rowline"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>');
+
+  const cats=catStats();
+  if(cats.length){
+    h+='<div class="sect">▍文法類別正確率</div>';
+    cats.forEach(c=>{
+      const col=c.p<.5?"#ff4d6d":c.p<.75?"#ffc93c":"#2ecc71";
+      h+='<div class="rowline"><span class="cname">'+c.k+'</span>'
+        +'<span class="cbar"><i style="width:'+(c.p*100)+'%;background:'+col+'"></i></span>'
+        +'<b class="cnum">'+c.r+'/'+c.n+'　'+Math.round(c.p*100)+'%</b></div>';
+    });
+  }
+
+  const weak=cats.filter(c=>c.p<.75&&c.n>=2).slice(0,4);
+  const strong=cats.filter(c=>c.p>=.85&&c.n>=2).map(c=>c.k);
+  h+='<div class="sect">▍'+(final?"檢討與加強建議":"進 BOSS 前先補這幾個")+'</div>';
+  if(weak.length){
+    weak.forEach(c=>{
+      h+='<div class="advice"><b>⚠ '+c.k+'（'+Math.round(c.p*100)+'%）</b><br>'+(TIPS[c.k]||"")+'</div>';
+    });
+  }else{
+    h+='<div class="advice good"><b>✔ 沒有明顯弱點</b><br>各類別正確率都在 75% 以上'
+      +(final?"，可以往 FCE (B2) 程度前進了。":"，狀態很好，直接進最終決戰。")+'</div>';
+  }
+  if(strong.length)
+    h+='<div class="advice good"><b>✔ 已掌握</b><br>'+strong.join("、")+' —— 這些類別表現穩定，複習時可以先跳過。</div>';
+  if(avg>9)
+    h+='<div class="advice"><b>⏱ 作答偏慢（平均 '+avg.toFixed(1)+' 秒）</b><br>PET 閱讀有時間壓力。看到題目先找關鍵字（時間標記、介系詞、先行詞），不要整句翻譯成中文再判斷。</div>';
+  if(P.best<=2&&total>=8)
+    h+='<div class="advice"><b>🔗 連擊偏低（最高 x'+P.best+'）</b><br>錯誤很分散，代表是觀念不熟而不是粗心。建議照上面的弱點順序，一次只練一個類別。</div>';
+
+  if(stats.wrongList.length){
+    h+='<div class="sect">▍錯題清單（'+stats.wrongList.length+' 題）</div><div class="wrongList">';
+    stats.wrongList.forEach(w=>{
+      h+='<div class="wq"><span class="tag">'+w.c+'</span>'+w.q.replace(/___/g,"______")
+        +'<br>正解：<em>'+w.ans+'</em>'
+        +(w.pick?'　你選了：<s>'+w.pick+'</s>':'　<s>（超時未作答）</s>')
+        +'<br>'+w.e+'</div>';
+    });
+    h+='</div>';
+  }else{
+    h+='<div class="advice good"><b>🎯 目前全對</b><br>到這裡一題都沒錯，保持這個節奏。</div>';
+  }
+  return h;
+}
+
+/* 中場檢討：擊破 5 台敵機、進 BOSS 之前 */
+function showMid(){
+  clearInterval(timerId);
+  const total=stats.right+stats.wrong;
+  const acc=total?Math.round(stats.right/total*100):0;
+  $("#midSub").innerHTML="五台敵機全部擊破。最終魔神 <b style=\'color:#ffc93c\'>GRAMMAROS</b> 比前面所有敵機都強 —— "
+    +"進場前先看一下自己錯在哪，目前正確率 <b style=\'color:#ffc93c\'>"+acc+"%</b>。";
+  $("#midReport").innerHTML=reportHTML(false);
+  $("#scMid").classList.remove("hide");
+}
+
 function end(win){
   clearInterval(timerId); SND.stop();
   win?SND.win():SND.lose();
   const total=stats.right+stats.wrong;
   const acc=total?stats.right/total:0;
-  const avg=stats.answered?(stats.timeSum/stats.answered):0;
-  const mins=Math.max(1,Math.round((Date.now()-startTime)/60000));
 
   let g,gc;
   if(win&&acc>=.9){g="S";gc="#ffd93c"}
@@ -1700,59 +1796,7 @@ function end(win){
   $("#overSub").textContent=win?"你擊破了最終魔神 GRAMMAROS！下面是這一戰的完整檢討。"
                                :"機體被擊墜。先看下面的弱點分析，補完再出擊一次。";
 
-  let h='<div class="sect">▍戰鬥紀錄</div>';
-  const rows=[
-    ["使用機體",P.n+" "+P.en+"（"+P.type+"）　LV "+P.lv],
-    ["答對 / 總題數",stats.right+" / "+total+"　正確率 "+Math.round(acc*100)+"%"],
-    ["最高連擊","COMBO x"+P.best],
-    ["平均作答時間",avg.toFixed(1)+" 秒 / 題"],
-    ["抵達關卡",win?"全破 6 / 6":(stage+1)+" / 6"],
-    ["總作戰時間","約 "+mins+" 分鐘"]
-  ];
-  rows.forEach(r=>h+='<div class="rowline"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>');
-
-  const cats=Object.entries(stats.byCat)
-    .map(([k,v])=>({k,r:v.r,w:v.w,n:v.r+v.w,p:v.r/(v.r+v.w)}))
-    .sort((a,b)=>a.p-b.p||b.n-a.n);
-
-  if(cats.length){
-    h+='<div class="sect">▍文法類別正確率</div>';
-    cats.forEach(c=>{
-      const col=c.p<.5?"#ff4d6d":c.p<.75?"#ffc93c":"#2ecc71";
-      h+='<div class="rowline"><span class="cname">'+c.k+'</span>'
-        +'<span class="cbar"><i style="width:'+(c.p*100)+'%;background:'+col+'"></i></span>'
-        +'<b class="cnum">'+c.r+'/'+c.n+'　'+Math.round(c.p*100)+'%</b></div>';
-    });
-  }
-
-  const weak=cats.filter(c=>c.p<.75&&c.n>=2).slice(0,4);
-  const strong=cats.filter(c=>c.p>=.85&&c.n>=2).map(c=>c.k);
-  h+='<div class="sect">▍檢討與加強建議</div>';
-  if(weak.length){
-    weak.forEach(c=>{
-      h+='<div class="advice"><b>⚠ '+c.k+'（'+Math.round(c.p*100)+'%）</b><br>'+(TIPS[c.k]||"")+'</div>';
-    });
-  }else{
-    h+='<div class="advice good"><b>✔ 沒有明顯弱點</b><br>各類別正確率都在 75% 以上，可以往 FCE (B2) 程度前進了。</div>';
-  }
-  if(strong.length)
-    h+='<div class="advice good"><b>✔ 已掌握</b><br>'+strong.join("、")+' —— 這些類別表現穩定，複習時可以先跳過。</div>';
-  if(avg>9)
-    h+='<div class="advice"><b>⏱ 作答偏慢（平均 '+avg.toFixed(1)+' 秒）</b><br>PET 閱讀有時間壓力。看到題目先找關鍵字（時間標記、介系詞、先行詞），不要整句翻譯成中文再判斷。</div>';
-  if(P.best<=2&&total>=8)
-    h+='<div class="advice"><b>🔗 連擊偏低（最高 x'+P.best+'）</b><br>錯誤很分散，代表是觀念不熟而不是粗心。建議照上面的弱點順序，一次只練一個類別。</div>';
-
-  if(stats.wrongList.length){
-    h+='<div class="sect">▍錯題清單（'+stats.wrongList.length+' 題）</div><div id="wrongList">';
-    stats.wrongList.forEach(w=>{
-      h+='<div class="wq"><span class="tag">'+w.c+'</span>'+w.q.replace(/___/g,"______")
-        +'<br>正解：<em>'+w.ans+'</em>'
-        +(w.pick?'　你選了：<s>'+w.pick+'</s>':'　<s>（超時未作答）</s>')
-        +'<br>'+w.e+'</div>';
-    });
-    h+='</div>';
-  }
-  $("#report").innerHTML=h;
+  $("#report").innerHTML=reportHTML(true);
   $("#scOver").classList.remove("hide");
 }
 
@@ -1761,6 +1805,7 @@ $("#btnToPick").onclick=()=>{SND.init();if(SND.ctx&&SND.ctx.state==="suspended")
   buildPicks();$("#scTitle").classList.add("hide");$("#scPick").classList.remove("hide")};
 $("#btnBackTitle").onclick=()=>{$("#scPick").classList.add("hide");$("#scTitle").classList.remove("hide")};
 $("#btnStart").onclick=()=>{if(chosen)start()};
+$("#btnToBoss").onclick=()=>{$("#scMid").classList.add("hide");loadEnemy();nextQ()};
 $("#btnAgain").onclick=()=>{if(chosen)start()};
 $("#btnChange").onclick=()=>{$("#scOver").classList.add("hide");buildPicks();$("#scPick").classList.remove("hide")};
 $("#btnSound").onclick=e=>{
@@ -1774,6 +1819,7 @@ document.addEventListener("keydown",e=>{
   if(e.key==="Enter"){
     if(!$("#scTitle").classList.contains("hide"))$("#btnToPick").click();
     else if(!$("#scPick").classList.contains("hide")&&chosen)start();
+    else if(!$("#scMid").classList.contains("hide"))$("#btnToBoss").click();
     else if(!$("#scOver").classList.contains("hide")&&chosen)start();
   }
 });
