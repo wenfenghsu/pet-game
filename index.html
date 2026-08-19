@@ -1,0 +1,1762 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PET 英文特訓 ROBOT WARS</title>
+<style>
+:root{
+  --ink:#12161f; --paper:#fffaf0; --gold:#ffc93c; --hero:#4ade80; --enemy:#ff4d6d;
+  --ok:#2ecc71; --bad:#ff4757;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:"Noto Sans TC","PingFang TC","Hiragino Sans","Helvetica Neue",Arial,sans-serif;
+  background:#080b12;color:#12161f;overflow:hidden;display:flex;align-items:center;justify-content:center;
+}
+#app{width:100%;max-width:1120px;height:100%;max-height:780px;position:relative;
+  display:flex;flex-direction:column;overflow:hidden;background:#080b12}
+
+/* ============ 戰鬥場景 ============ */
+#scene{position:relative;flex:1 1 auto;min-height:0;overflow:hidden;border-bottom:5px solid var(--ink)}
+#scene svg.stage{position:absolute;inset:0;width:100%;height:100%}
+
+/* 櫻花 */
+.petal{position:absolute;top:-24px;width:13px;height:13px;pointer-events:none;
+  background:#ffb7d5;border-radius:13px 1px 13px 1px;opacity:.8;animation:fall linear infinite}
+@keyframes fall{
+  0%{transform:translate(0,-30px) rotate(0deg)}
+  100%{transform:translate(-90px,720px) rotate(760deg)}}
+
+/* 漫畫集中線 */
+#speed{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .1s;z-index:4;
+  background:repeating-conic-gradient(from 0deg at 50% 44%,
+    rgba(16,20,30,.62) 0deg 1.1deg, transparent 1.1deg 3.2deg);
+  -webkit-mask-image:radial-gradient(circle at 50% 44%, transparent 20%, #000 60%);
+  mask-image:radial-gradient(circle at 50% 44%, transparent 20%, #000 60%)}
+#speed.on{opacity:1}
+/* 網點 */
+#tone{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .12s;z-index:4;
+  background-image:radial-gradient(#12161f 1.4px, transparent 1.5px);
+  background-size:7px 7px}
+#tone.on{opacity:.3}
+#flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .1s;z-index:4}
+#flash.on{opacity:.75}
+#flash.red{background:#ff4d6d}
+
+/* 擬聲詞 */
+#onomat{position:absolute;left:50%;top:40%;z-index:8;pointer-events:none;opacity:0;
+  font-weight:900;font-style:italic;font-size:clamp(34px,7vw,80px);letter-spacing:-2px;
+  color:#fffaf0;-webkit-text-stroke:7px #12161f;paint-order:stroke fill;
+  transform:translate(-50%,-50%) rotate(-9deg) scale(.4)}
+#onomat.go{animation:onom .75s cubic-bezier(.2,1.6,.4,1) forwards}
+@keyframes onom{0%{opacity:0;transform:translate(-50%,-50%) rotate(-14deg) scale(.4)}
+  30%{opacity:1;transform:translate(-50%,-50%) rotate(-9deg) scale(1.15)}
+  75%{opacity:1;transform:translate(-50%,-50%) rotate(-9deg) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-64%) rotate(-9deg) scale(1.05)}}
+
+/* 衝擊爆星 */
+.burst{position:absolute;width:190px;height:190px;z-index:6;pointer-events:none;
+  transform:translate(-50%,-50%) scale(0);
+  clip-path:polygon(50% 0,60% 30%,90% 12%,74% 42%,100% 50%,74% 60%,92% 90%,60% 74%,50% 100%,40% 74%,10% 92%,26% 60%,0 50%,26% 40%,8% 10%,40% 30%);
+  animation:bst .4s ease-out forwards}
+@keyframes bst{0%{transform:translate(-50%,-50%) scale(.1);opacity:1}
+  70%{transform:translate(-50%,-50%) scale(1.05);opacity:1}
+  100%{transform:translate(-50%,-50%) scale(1.25);opacity:0}}
+
+/* COMBO */
+#combo{position:absolute;left:50%;top:26%;z-index:8;pointer-events:none;opacity:0;
+  font-weight:900;font-style:italic;font-size:clamp(26px,5.4vw,58px);letter-spacing:-1px;
+  color:var(--gold);-webkit-text-stroke:6px #12161f;paint-order:stroke fill;
+  transform:translate(-50%,-50%)}
+#combo.go{animation:onom .85s cubic-bezier(.2,1.6,.4,1) forwards}
+
+.dmg{position:absolute;z-index:7;pointer-events:none;font-weight:900;font-style:italic;
+  font-size:clamp(24px,3.8vw,42px);color:#fffaf0;-webkit-text-stroke:5px #12161f;paint-order:stroke fill;
+  animation:rise 1.05s ease-out forwards}
+@keyframes rise{0%{opacity:0;transform:translateY(14px) scale(.6)}
+  22%{opacity:1;transform:translateY(-10px) scale(1.2)}
+  100%{opacity:0;transform:translateY(-84px) scale(1)}}
+.dmg.miss{color:#7dd3fc;font-size:clamp(20px,3vw,34px)}
+.dmg.heal{color:#86efac}
+
+/* 動作 */
+.lunge-r{animation:lgR .45s ease-in-out}
+.lunge-l{animation:lgL .45s ease-in-out}
+@keyframes lgR{45%{transform:translateX(110px) scale(1.04)}}
+@keyframes lgL{45%{transform:translateX(-110px) scale(1.04)}}
+.shake{animation:shk .38s}
+@keyframes shk{0%,100%{transform:translate(0,0)}18%{transform:translate(-12px,5px) rotate(-2deg)}
+  38%{transform:translate(11px,-5px) rotate(2deg)}60%{transform:translate(-8px,4px)}82%{transform:translate(6px,-2px)}}
+.hover{animation:hov 2.6s ease-in-out infinite}
+@keyframes hov{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+
+/* ============ HUD（Pokémon 式紙牌） ============ */
+.hud{position:absolute;top:12px;z-index:5;background:var(--paper);
+  border:4px solid var(--ink);border-radius:12px;padding:8px 12px;
+  box-shadow:5px 5px 0 rgba(18,22,31,.45);min-width:250px}
+#hudP{left:12px} #hudE{right:12px;text-align:right}
+.hud .nm{font-weight:900;font-size:13.5px;letter-spacing:.5px;color:var(--ink);
+  display:flex;align-items:center;gap:6px}
+#hudE .nm{justify-content:flex-end}
+.hud .lv{background:var(--ink);color:var(--paper);border-radius:5px;padding:1px 7px;font-size:11px}
+.bar{height:14px;border-radius:8px;background:#d8d2c4;border:3px solid var(--ink);
+  overflow:hidden;margin:6px 0 3px;position:relative}
+.bar i{display:block;height:100%;width:100%;transition:width .45s cubic-bezier(.2,.9,.3,1)}
+#pHp{background:linear-gradient(90deg,#22c55e,#86efac)}
+#pHp.mid{background:linear-gradient(90deg,#f59e0b,#fcd34d)}
+#pHp.low{background:linear-gradient(90deg,#dc2626,#f87171)}
+#eHp{background:linear-gradient(90deg,#e11d48,#fb7185)}
+#hudE.boss #eHp{background:linear-gradient(90deg,#b45309,#fbbf24)}
+#hudE.boss{border-color:#7c2d12;box-shadow:5px 5px 0 rgba(124,45,18,.5)}
+.stat{display:flex;gap:9px;font-size:11px;font-weight:800;color:#3d4657}
+#hudE .stat{justify-content:flex-end}
+.stat b{color:var(--ink)}
+#skillTag{margin-top:3px;font-size:10px;font-weight:800;color:#7c3aed}
+
+#stageTag{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:5;
+  background:var(--ink);color:var(--paper);border-radius:22px;padding:6px 20px;
+  font-size:11.5px;letter-spacing:3px;font-weight:900;border:3px solid var(--paper)}
+#btnSound{position:absolute;right:12px;bottom:12px;z-index:7;font-size:11px;font-weight:800;
+  padding:7px 13px;border-radius:20px;background:var(--paper);border:3px solid var(--ink);
+  color:var(--ink);cursor:pointer;font-family:inherit}
+
+/* ============ 題目區（漫畫格） ============ */
+#qwrap{flex:0 0 auto;background:#12161f;padding:10px 12px 13px}
+#timer{height:11px;border-radius:7px;background:#2c3242;border:3px solid #000;overflow:hidden;margin-bottom:9px}
+#timer i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#22d3ee,#a3e635);transition:width .1s linear}
+#timer.low i{background:linear-gradient(90deg,#dc2626,#f97316);animation:blink .4s steps(2) infinite}
+@keyframes blink{50%{opacity:.45}}
+#qcat{text-align:center;font-size:10px;letter-spacing:3px;color:var(--gold);font-weight:900;margin-bottom:5px}
+#qbox{background:var(--paper);border:4px solid #000;border-radius:14px;padding:11px 16px;
+  text-align:center;box-shadow:4px 4px 0 rgba(255,250,240,.18);margin-bottom:9px}
+#q{font-size:clamp(17px,2.7vw,26px);font-weight:800;line-height:1.45;color:var(--ink);min-height:1.45em}
+#q b{color:#e11d48;letter-spacing:1px}
+#opts{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.opt{display:flex;align-items:center;gap:9px;background:var(--paper);border:4px solid #000;
+  border-radius:11px;padding:9px 12px;font-size:clamp(13px,1.9vw,16.5px);font-weight:800;
+  color:var(--ink);cursor:pointer;text-align:left;font-family:inherit;
+  box-shadow:3px 3px 0 rgba(255,250,240,.18);transition:.12s}
+.opt:hover:not(:disabled){transform:translate(2px,-2px);box-shadow:5px 5px 0 var(--gold)}
+.opt:active:not(:disabled){transform:translate(2px,2px);box-shadow:0 0 0 var(--gold)}
+.opt:disabled{cursor:default;opacity:.55}
+.opt .k{flex:0 0 auto;width:25px;height:25px;border-radius:50%;background:var(--ink);color:var(--paper);
+  display:grid;place-items:center;font-size:13px;font-weight:900}
+.opt.right{background:var(--ok);color:#052e16;opacity:1!important}
+.opt.right .k{background:#052e16;color:var(--ok)}
+.opt.wrong{background:var(--bad);color:#fff;opacity:1!important}
+.opt.wrong .k{background:#450a0a;color:#fff}
+#exp{margin-top:9px;font-size:13.5px;line-height:1.6;padding:10px 14px;border-radius:11px;
+  background:var(--paper);border:3px solid #000;border-left:9px solid var(--gold);color:var(--ink);
+  display:none;font-weight:600}
+#exp.show{display:block}
+#exp b{color:#b45309}
+
+/* ============ 覆蓋畫面 ============ */
+.screen{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;padding:22px;overflow-y:auto;
+  background:
+    repeating-linear-gradient(115deg, rgba(255,255,255,.045) 0 2px, transparent 2px 9px),
+    radial-gradient(circle at 50% 30%, #1e2a4a, #070a11 70%);color:var(--paper)}
+.screen.hide{display:none}
+.jp{font-size:11px;letter-spacing:6px;color:var(--gold);font-weight:900;margin-bottom:6px}
+.screen h1{font-size:clamp(28px,5.4vw,52px);font-weight:900;font-style:italic;letter-spacing:1px;
+  color:var(--paper);-webkit-text-stroke:2px #000;paint-order:stroke fill;line-height:1.15}
+.screen h1 em{font-style:italic;color:var(--gold)}
+.screen h2{font-size:clamp(22px,4.4vw,38px);font-weight:900;font-style:italic;margin-bottom:10px;
+  -webkit-text-stroke:2px #000;paint-order:stroke fill}
+.screen p{opacity:.9;font-size:13.5px;line-height:1.85;max-width:600px;color:#dce4f0}
+.btn{margin-top:20px;padding:14px 44px;font-size:17px;font-weight:900;letter-spacing:3px;font-style:italic;
+  border:4px solid #000;border-radius:12px;cursor:pointer;font-family:inherit;
+  background:var(--gold);color:var(--ink);box-shadow:5px 5px 0 #000;transition:.12s}
+.btn:hover{transform:translate(2px,-2px);box-shadow:7px 7px 0 #000}
+.btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 #000}
+.btn:disabled{opacity:.4;cursor:default;transform:none;box-shadow:5px 5px 0 #000}
+
+/* 選角 */
+#picks{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;width:100%;max-width:900px;margin-top:14px}
+.pick{background:var(--paper);border:4px solid #000;border-radius:13px;padding:9px 8px 11px;
+  cursor:pointer;transition:.13s;box-shadow:4px 4px 0 rgba(0,0,0,.6);text-align:center}
+.pick:hover{transform:translateY(-5px);box-shadow:4px 10px 0 rgba(0,0,0,.6)}
+.pick.sel{background:var(--gold);transform:translateY(-5px);box-shadow:4px 10px 0 #000}
+.pick svg{width:100%;height:132px;display:block}
+.pick .pn{font-size:13px;font-weight:900;color:var(--ink);margin-top:4px;line-height:1.25}
+.pick .pt{display:inline-block;font-size:9.5px;font-weight:900;color:var(--paper);
+  background:var(--ink);border-radius:4px;padding:1px 7px;margin-top:3px;letter-spacing:1px}
+.pick .ps{font-size:10.5px;color:#3d4657;font-weight:700;margin-top:5px;line-height:1.5}
+#pickInfo{margin-top:13px;min-height:52px;background:rgba(255,250,240,.09);border:2px solid rgba(255,250,240,.25);
+  border-radius:10px;padding:9px 15px;max-width:820px;font-size:13px;line-height:1.7;color:#e8eef8}
+#pickInfo b{color:var(--gold)}
+
+/* 結算 */
+#report{max-width:700px;width:100%;text-align:left;margin-top:12px}
+.sect{font-size:11.5px;letter-spacing:3px;color:var(--gold);margin:15px 0 8px;font-weight:900;
+  border-bottom:2px solid rgba(255,201,60,.35);padding-bottom:4px}
+.rowline{display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border-radius:8px;
+  background:rgba(255,250,240,.08);margin-bottom:5px;font-size:13px;font-weight:700;color:#e8eef8}
+.rowline b{color:var(--gold);font-weight:900}
+.cbar{flex:1;height:10px;margin:0 11px;background:rgba(0,0,0,.4);border-radius:6px;overflow:hidden;
+  border:1px solid rgba(255,255,255,.15)}
+.cbar i{display:block;height:100%;border-radius:6px}
+.cname{flex:0 0 118px;font-size:12.5px}
+.cnum{flex:0 0 74px;text-align:right;font-size:12px}
+#grade{font-size:clamp(52px,11vw,104px);font-weight:900;font-style:italic;line-height:1;
+  -webkit-text-stroke:4px #000;paint-order:stroke fill}
+.advice{background:rgba(255,77,109,.14);border-left:5px solid var(--bad);border-radius:8px;
+  padding:9px 13px;margin-bottom:6px;font-size:12.5px;line-height:1.7;color:#ffe4e6}
+.advice b{color:#fda4af}
+.good{background:rgba(46,204,113,.14);border-left-color:var(--ok);color:#dcfce7}
+.good b{color:#86efac}
+#wrongList{max-height:230px;overflow-y:auto;padding-right:4px}
+.wq{font-size:12.5px;padding:9px 13px;border-radius:8px;background:rgba(255,250,240,.07);
+  margin-bottom:6px;line-height:1.7;color:#e8eef8;border-left:4px solid var(--bad)}
+.wq .tag{display:inline-block;font-size:9.5px;background:var(--gold);color:var(--ink);
+  border-radius:4px;padding:1px 6px;font-weight:900;margin-right:6px}
+.wq em{color:#86efac;font-style:normal;font-weight:900}
+.wq s{color:#fda4af;font-weight:700}
+.row2{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.btn.ghost{background:transparent;color:var(--paper);border-color:var(--paper);box-shadow:5px 5px 0 rgba(255,250,240,.3);
+  font-size:14px;padding:11px 26px}
+
+@media(max-width:700px){
+  #opts{grid-template-columns:1fr}
+  #skillTag{display:none}
+  #stageTag{top:auto;bottom:11px;left:11px;transform:none;font-size:10px;padding:4px 12px;letter-spacing:2px}
+  #btnSound{font-size:10px;padding:5px 10px}
+  #picks{grid-template-columns:repeat(2,1fr)}
+  .hud{min-width:0;padding:6px 9px;border-width:3px}
+  #hudP,#hudE{max-width:44%}
+  .hud .nm{font-size:11px}.stat{font-size:9.5px;gap:6px}
+  .cname{flex:0 0 84px;font-size:11px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="scene">
+    <svg class="stage" viewBox="0 0 1000 560" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#2f6fd0"/><stop offset="38%" stop-color="#79b8f2"/>
+          <stop offset="72%" stop-color="#cfe9fb"/><stop offset="100%" stop-color="#ffe6b8"/>
+        </linearGradient>
+        <linearGradient id="skyB" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#2b1145"/><stop offset="45%" stop-color="#6d1d47"/>
+          <stop offset="100%" stop-color="#e8642f"/>
+        </linearGradient>
+        <linearGradient id="grd" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#8fd14f"/><stop offset="100%" stop-color="#4b8a2b"/>
+        </linearGradient>
+        <linearGradient id="gA" x1="0" y1="0" x2="0.3" y2="1">
+          <stop offset="0%" stop-color="#fb923c"/><stop offset="55%" stop-color="#ea580c"/>
+          <stop offset="100%" stop-color="#9a3412"/></linearGradient>
+        <linearGradient id="gB" x1="0" y1="0" x2="0.3" y2="1">
+          <stop offset="0%" stop-color="#e8f2ff"/><stop offset="55%" stop-color="#7cabe8"/>
+          <stop offset="100%" stop-color="#2f5f9e"/></linearGradient>
+        <linearGradient id="gC" x1="0" y1="0" x2="0.3" y2="1">
+          <stop offset="0%" stop-color="#a7f3d0"/><stop offset="55%" stop-color="#34a06a"/>
+          <stop offset="100%" stop-color="#155e42"/></linearGradient>
+        <linearGradient id="gD" x1="0" y1="0" x2="0.3" y2="1">
+          <stop offset="0%" stop-color="#ddd0f7"/><stop offset="55%" stop-color="#8b5cf6"/>
+          <stop offset="100%" stop-color="#4c1d95"/></linearGradient>
+        <linearGradient id="gE" x1="0" y1="0" x2="0.3" y2="1">
+          <stop id="eS0" offset="0%" stop-color="#dbe6f3"/>
+          <stop id="eS1" offset="55%" stop-color="#8aa0bd"/>
+          <stop id="eS2" offset="100%" stop-color="#3c4a63"/></linearGradient>
+        <linearGradient id="blade" x1="0" y1="1" x2="1" y2="0">
+          <stop offset="0%" stop-color="#67e8f9"/><stop offset="60%" stop-color="#ffffff"/>
+          <stop offset="100%" stop-color="#a5f3fc"/></linearGradient>
+        <filter id="gl" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="6" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+
+      <!-- ===== 天空 ===== -->
+      <rect id="skyR" width="1000" height="400" fill="url(#sky)"/>
+      <g id="sunG">
+        <circle cx="798" cy="96" r="46" fill="#fffbe8" filter="url(#gl)" opacity=".95"/>
+        <circle cx="798" cy="96" r="30" fill="#fff"/>
+      </g>
+      <!-- 賽璐璐雲 -->
+      <g id="clouds" opacity=".95">
+        <g>
+          <path d="M120 118 q14 -34 50 -30 q16 -32 56 -22 q34 -14 52 16 q34 -2 34 26 q0 22 -30 22 l-140 0 q-26 0 -22 -12Z" fill="#fff"/>
+          <path d="M126 128 q22 12 62 10 l122 -2 q22 -2 24 -12 q6 20 -22 20 l-140 0 q-38 0 -46 -16Z" fill="#bfd9f2"/>
+        </g>
+        <g transform="translate(500,-38) scale(.78)">
+          <path d="M120 118 q14 -34 50 -30 q16 -32 56 -22 q34 -14 52 16 q34 -2 34 26 q0 22 -30 22 l-140 0 q-26 0 -22 -12Z" fill="#fff"/>
+          <path d="M126 128 q22 12 62 10 l122 -2 q22 -2 24 -12 q6 20 -22 20 l-140 0 q-38 0 -46 -16Z" fill="#bfd9f2"/>
+        </g>
+        <g transform="translate(-70,70) scale(.6)">
+          <path d="M120 118 q14 -34 50 -30 q16 -32 56 -22 q34 -14 52 16 q34 -2 34 26 q0 22 -30 22 l-140 0 q-26 0 -22 -12Z" fill="#fff"/>
+        </g>
+      </g>
+      <!-- 遠山 -->
+      <path d="M0 300 L110 214 L176 262 L268 178 L352 254 L440 206 L520 268 L620 192 L706 258 L800 210 L900 268 L1000 224 L1000 400 L0 400Z"
+            fill="#6f86bf" opacity=".78"/>
+      <path d="M0 332 L96 274 L188 322 L296 254 L392 320 L492 268 L596 328 L700 272 L812 326 L920 280 L1000 320 L1000 400 L0 400Z"
+            fill="#4c62a0" opacity=".85"/>
+      <!-- 富士山 -->
+      <path d="M300 316 L392 196 L484 316Z" fill="#5b71ad"/>
+      <path d="M368 232 L392 196 L418 232 L404 226 L392 236 L380 226Z" fill="#fff"/>
+      <!-- 鳥居 + 塔 剪影 -->
+      <g fill="#2f3c63" opacity=".9">
+        <path d="M84 342 L84 300 M132 342 L132 300" stroke="#2f3c63" stroke-width="9"/>
+        <rect x="66" y="290" width="84" height="8" rx="2"/>
+        <rect x="60" y="278" width="96" height="9" rx="4"/>
+        <rect x="78" y="308" width="60" height="7" rx="2"/>
+        <path d="M900 344 L900 300 L890 300 L916 268 L942 300 L932 300 L932 344Z"/>
+        <rect x="884" y="296" width="64" height="7" rx="3"/>
+        <path d="M898 282 L916 258 L934 282Z"/>
+        <rect x="892" y="278" width="48" height="6" rx="3"/>
+      </g>
+      <!-- ===== 地面 ===== -->
+      <rect y="366" width="1000" height="194" fill="url(#grd)"/>
+      <path d="M0 366 Q250 350 500 368 T1000 358 L1000 392 L0 392Z" fill="#a3e05c"/>
+      <path d="M0 430 Q260 414 520 434 T1000 424 L1000 470 Q520 452 0 470Z" fill="#3f7a25" opacity=".5"/>
+      <!-- 跑道/戰場線 -->
+      <path d="M0 472 Q500 452 1000 472" stroke="#2f5d1c" stroke-width="5" fill="none" opacity=".45"/>
+      <!-- 前景草叢 -->
+      <g fill="#25551a">
+        <path d="M-10 560 L-10 508 q26 -30 46 -4 q16 -34 40 2 q22 -26 40 6 l0 48Z"/>
+        <path d="M1010 560 L1010 502 q-30 -32 -52 -6 q-18 -32 -44 4 q-24 -24 -44 8 l0 52Z"/>
+      </g>
+
+      <!-- ===== 我方機體 ===== -->
+      <g id="hero" transform="translate(262,452) scale(.9)">
+        <ellipse cx="0" cy="6" rx="68" ry="14" fill="#12161f" opacity=".3"/>
+        <g id="heroLunge"><g id="heroFloat"><g id="heroBody"><g id="pmHost"></g></g></g></g>
+      </g>
+
+      <!-- ===== 敵方 ===== -->
+      <g id="enemy" transform="translate(752,452)">
+        <ellipse cx="0" cy="6" rx="66" ry="14" fill="#12161f" opacity=".3"/>
+        <g id="enemyLunge"><g id="enemyFloat"><g id="enemyBody">
+
+        <!-- 敵 A：量產機兵（由 mechSVG 產生） -->
+        <g id="eGrunt" class="em" style="display:none" transform="scale(-1,1)"></g>
+
+        <!-- 敵 B：文法妖獸 -->
+        <g id="eBeast" class="em" style="display:none">
+          <g stroke="#10141f" stroke-width="4.5" stroke-linejoin="round">
+            <path d="M46 -84 q60 -12 76 -62 q10 42 -30 68 q-22 14 -46 8Z" fill="url(#gE)"/>
+            <path d="M-70 -70 q-22 -74 24 -122 q46 -46 100 -6 q42 32 26 96 q-8 34 -46 40 l-58 0 q-38 -4 -46 -8Z" fill="url(#gE)"/>
+            <path d="M-52 -30 q-16 24 4 30 q22 6 34 -12 M40 -34 q18 22 -2 30 q-22 6 -32 -14" fill="#3c4a63"/>
+            <path d="M-56 -170 L-84 -224 L-40 -192Z" fill="#e2e8f0"/>
+            <path d="M46 -172 L78 -226 L32 -194Z" fill="#e2e8f0"/>
+          </g>
+          <path d="M-40 -74 q-10 -46 12 -74 q26 -30 62 -6 q26 20 16 62 q-6 22 -30 24 l-32 0 q-24 -2 -28 -6Z" fill="#f8fafc" opacity=".35"/>
+          <ellipse class="ecore" cx="-34" cy="-124" rx="16" ry="20" filter="url(#gl)"/>
+          <ellipse class="ecore" cx="14" cy="-132" rx="12" ry="16" filter="url(#gl)"/>
+          <ellipse cx="-34" cy="-130" rx="6" ry="9" fill="#10141f"/>
+          <ellipse cx="14" cy="-137" rx="4.5" ry="7" fill="#10141f"/>
+          <circle cx="-38" cy="-135" r="4" fill="#fff"/><circle cx="11" cy="-141" r="3" fill="#fff"/>
+          <path d="M-72 -100 q26 22 62 14 q-16 22 -44 14 q-20 -8 -18 -28Z" fill="#1d2637" stroke="#10141f" stroke-width="3.5" stroke-linejoin="round"/>
+          <path d="M-62 -96 L-56 -80 L-48 -96Z M-44 -92 L-38 -76 L-30 -92Z M-26 -88 L-20 -74 L-12 -88Z" fill="#fff"/>
+          <path d="M-70 -60 L-88 -40 L-74 -42 L-84 -24 L-62 -44Z" fill="#e2e8f0" stroke="#10141f" stroke-width="3" stroke-linejoin="round"/>
+        </g>
+
+        <!-- 敵 C：最終魔神 -->
+        <g id="eDemon" class="em" style="display:none">
+          <g stroke="#10141f" stroke-width="5" stroke-linejoin="round">
+            <path d="M34 -196 q66 -56 132 -30 q-38 6 -54 30 q34 20 26 62 q-20 -32 -52 -36 q22 34 4 66 q-12 -50 -56 -66Z" fill="#5b21b6"/>
+            <path d="M-34 -196 q-58 -50 -116 -26 q34 6 48 28 q-30 18 -22 56 q18 -28 46 -32 q-20 30 -4 58 q10 -44 48 -58Z" fill="#4c1d95" opacity=".85"/>
+            <path d="M-40 -80 L-48 -24 L-14 -24 L-10 -80Z" fill="#7c3aed"/>
+            <path d="M12 -80 L16 -24 L52 -24 L42 -80Z" fill="#8b5cf6"/>
+            <path d="M-58 -28 L-10 -28 L-4 2 L-64 2Z" fill="#3b0764"/>
+            <path d="M12 -28 L58 -28 L64 2 L6 2Z" fill="#4c1d95"/>
+            <path d="M-38 -104 L38 -104 L34 -74 L-34 -74Z" fill="#3b0764"/>
+            <path d="M-46 -184 L46 -184 L58 -128 L38 -100 L-38 -100 L-58 -128Z" fill="url(#gE)"/>
+            <path d="M-48 -190 L-98 -178 L-106 -128 L-56 -118Z" fill="#7c3aed"/>
+            <path d="M48 -190 L98 -178 L106 -128 L56 -118Z" fill="#8b5cf6"/>
+            <path d="M-98 -178 L-132 -214 L-104 -158Z" fill="#e11d48"/>
+            <path d="M98 -178 L132 -214 L104 -158Z" fill="#e11d48"/>
+            <path d="M-76 -124 L-104 -122 L-110 -70 L-80 -66Z" fill="#8b5cf6"/>
+            <path d="M68 -124 L104 -120 L112 -74 L74 -70Z" fill="#8b5cf6"/>
+            <path d="M-28 -222 q-4 -30 28 -30 q32 0 28 30 q2 28 -28 36 q-30 -8 -28 -36Z" fill="#2e1065"/>
+          </g>
+          <path d="M-30 -172 L-8 -172 L-13 -138 L-32 -138Z" fill="#c4b5fd" opacity=".8"/>
+          <path d="M8 -172 L30 -172 L32 -138 L13 -138Z" fill="#c4b5fd" opacity=".8"/>
+          <circle class="ecore" cx="0" cy="-120" r="17" filter="url(#gl)"/>
+          <path d="M-24 -234 C-42 -240 -58 -256 -64 -280 C-48 -262 -32 -252 -16 -248Z" fill="#e11d48" stroke="#10141f" stroke-width="4" stroke-linejoin="round"/>
+          <path d="M24 -234 C42 -240 58 -256 64 -280 C48 -262 32 -252 16 -248Z" fill="#e11d48" stroke="#10141f" stroke-width="4" stroke-linejoin="round"/>
+          <path class="ecore" d="M-24 -228 L-7 -217 L-10 -208 L-24 -214Z" filter="url(#gl)"/>
+          <path class="ecore" d="M24 -228 L7 -217 L10 -208 L24 -214Z" filter="url(#gl)"/>
+          <path d="M-18 -203 q18 13 36 0 q-4 15 -18 15 q-14 0 -18 -15Z" fill="#10141f"/>
+          <path d="M-13 -199 L-9 -191 L-5 -200 L-1 -190 L3 -200 L7 -191 L11 -199 Z" fill="#fff"/>
+          <path d="M-30 -246 q30 -12 60 0" fill="none" stroke="#10141f" stroke-width="3" opacity=".55"/>
+          <g stroke="#10141f" stroke-width="4" stroke-linejoin="round">
+            <rect x="-118" y="-134" width="26" height="34" rx="6" fill="#3b0764"/>
+            <path d="M-114 -136 L-244 -168 L-250 -142 L-116 -104Z" fill="#e11d48" filter="url(#gl)"/>
+          </g>
+        </g>
+
+        </g></g></g>
+      </g>
+    </svg>
+
+    <div id="speed"></div><div id="tone"></div><div id="flash"></div>
+    <div id="stageTag">STAGE 1</div>
+
+    <div class="hud" id="hudP">
+      <div class="nm"><span id="pName">—</span><span class="lv" id="pLv">LV 1</span></div>
+      <div class="bar"><i id="pHp"></i></div>
+      <div class="stat"><span>HP <b id="pHpN">0/0</b></span><span>ATK <b id="pAtk">0</b></span><span>裝甲 <b id="pDef">0%</b></span></div>
+      <div id="skillTag">—</div>
+    </div>
+    <div class="hud" id="hudE">
+      <div class="nm"><span id="eName">—</span></div>
+      <div class="bar"><i id="eHp"></i></div>
+      <div class="stat"><span>HP <b id="eHpN">0/0</b></span><span>裝甲 <b id="eDef">0</b></span></div>
+    </div>
+    <button id="btnSound">🔊 BGM / SE：ON</button>
+    <div id="onomat"></div><div id="combo"></div>
+  </div>
+
+  <div id="qwrap">
+    <div id="timer"><i></i></div>
+    <div id="qcat">GRAMMAR</div>
+    <div id="qbox"><div id="q">…</div></div>
+    <div id="opts"></div>
+    <div id="exp"></div>
+  </div>
+
+  <!-- ===== 標題 ===== -->
+  <div class="screen" id="scTitle">
+    <div class="jp">ロボット大戦 · 英文特訓</div>
+    <h1>PET 英文特訓<br><em>ROBOT WARS</em></h1>
+    <p style="margin-top:14px">
+      答對 → 機體開火攻擊｜答錯或超時 → 遭到反擊<br>
+      連續答對累積 <b style="color:#ffc93c">COMBO</b>，傷害倍增；答得越快傷害越高<br>
+      擊破 5 台敵機後，迎戰最終魔神<br>
+      <b style="color:#8fd14f">2,300+ 題劍橋 PET (B1) 文法</b>：時態、語態、關係子句、條件句、片語動詞…
+    </p>
+    <p style="font-size:12px;opacity:.6;margin-top:10px">鍵盤 A / B / C / D 或 1～4 作答</p>
+    <button class="btn" id="btnToPick">▶ 出擊</button>
+  </div>
+
+  <!-- ===== 選擇機體 ===== -->
+  <div class="screen hide" id="scPick">
+    <div class="jp">機体選択 · SELECT YOUR UNIT</div>
+    <h2 style="color:#ffc93c">選擇你的機體</h2>
+    <div id="picks"></div>
+    <div id="pickInfo">請選擇一台機體 —— 不同機體的數值與特殊能力會改變戰鬥策略。</div>
+    <div class="row2">
+      <button class="btn ghost" id="btnBackTitle">← 返回</button>
+      <button class="btn" id="btnStart" disabled>▶ 開始特訓</button>
+    </div>
+  </div>
+
+  <!-- ===== 結算 ===== -->
+  <div class="screen hide" id="scOver">
+    <div class="jp" id="overJp">ミッション終了</div>
+    <h2 id="overTitle"></h2>
+    <div id="grade"></div>
+    <p id="overSub"></p>
+    <div id="report"></div>
+    <div class="row2">
+      <button class="btn" id="btnAgain">↻ 再挑戰</button>
+      <button class="btn ghost" id="btnChange">機體變更</button>
+    </div>
+  </div>
+</div>
+<script>
+/* ============ 題庫：手寫 86 題 + 句型自動擴充 ============ */
+const HAND=[
+/* --- 時態 --- */
+{c:"時態",q:"I ___ my homework yet, so I can't go out.",o:["didn't finish","haven't finished","don't finish","wasn't finishing"],a:1,e:"yet 是現在完成式的標誌，用 have/has + p.p.。"},
+{c:"時態",q:"She ___ in London since 2019.",o:["lives","lived","has lived","is living"],a:2,e:"since + 時間點 → 現在完成式，表示從過去持續到現在。"},
+{c:"時態",q:"When I arrived, they ___ dinner.",o:["were having","have had","has had","have"],a:0,e:"過去某時正在進行的動作用過去進行式 was/were + V-ing。"},
+{c:"時態",q:"By the time we got to the cinema, the film ___.",o:["started","has started","had started","was starting"],a:2,e:"「過去的過去」用過去完成式 had + p.p.。"},
+{c:"時態",q:"Look at those dark clouds! It ___ rain.",o:["will","is going to","would","shall"],a:1,e:"有眼前證據的預測用 be going to。"},
+{c:"時態",q:"I'll call you as soon as I ___ home.",o:["will get","get","got","am getting"],a:1,e:"時間副詞子句(when/as soon as/before)中用現在式代替未來式。"},
+{c:"時態",q:"He ___ to Japan three times.",o:["has been","has gone","was","is going"],a:0,e:"have been to = 去過(已回來)；have gone to = 去了還沒回來。"},
+{c:"時態",q:"While I ___ dinner, the phone rang.",o:["cook","cooked","was cooking","have cooked"],a:2,e:"while + 過去進行式，被短暫動作(rang)打斷。"},
+{c:"時態",q:"They ___ each other for ten years before they got married.",o:["knew","have known","had known","were knowing"],a:2,e:"before + 過去式，更早的事用過去完成式。"},
+{c:"時態",q:"Water ___ at 100 degrees Celsius.",o:["is boiling","boils","boiled","has boiled"],a:1,e:"科學事實、不變真理用現在簡單式。"},
+{c:"時態",q:"Don't disturb him — he ___ on an important report.",o:["works","worked","is working","has worked"],a:2,e:"此刻正在進行的動作用現在進行式。"},
+{c:"時態",q:"I ___ my keys, so I can't open the door.",o:["lose","lost","have lost","had lost"],a:2,e:"過去動作對現在造成影響 → 現在完成式。"},
+{c:"時態",q:"What ___ you doing at eight o'clock last night?",o:["was","were","did","have"],a:1,e:"主詞 you 搭配 were + V-ing 構成過去進行式。"},
+{c:"時態",q:"My train ___ at 6:45 tomorrow morning.",o:["leaves","is leaving now","left","has left"],a:0,e:"時刻表、班次等固定安排用現在簡單式表未來。"},
+{c:"時態",q:"This time next week I ___ on a beach in Spain.",o:["will lie","will be lying","am lying","lie"],a:1,e:"未來某時正在進行 → will be + V-ing。"},
+/* --- 情態動詞 --- */
+{c:"情態動詞",q:"You ___ wear a helmet when you ride a motorbike. It's the law.",o:["must","might","could","may"],a:0,e:"must 表示強烈義務或法律規定。"},
+{c:"情態動詞",q:"You ___ be hungry — you've just had lunch!",o:["mustn't","can't","shouldn't","needn't"],a:1,e:"can't 表示「不可能」的推測；mustn't 是禁止。"},
+{c:"情態動詞",q:"Take an umbrella. It ___ rain later.",o:["must","can","might","should"],a:2,e:"might 表示不確定的可能性。"},
+{c:"情態動詞",q:"Entry is free, so you ___ pay anything.",o:["mustn't","don't have to","shouldn't","can't"],a:1,e:"don't have to = 不必；mustn't = 不可以。"},
+{c:"情態動詞",q:"His car is outside, so he ___ be at home.",o:["must","can't","might not","needn't"],a:0,e:"有證據的肯定推測用 must。"},
+{c:"情態動詞",q:"___ you help me carry this box, please?",o:["Must","Could","Should","May"],a:1,e:"Could you…? 是禮貌的請求。"},
+{c:"情態動詞",q:"When I was five, I ___ swim at all.",o:["couldn't","mustn't","shouldn't","wouldn't"],a:0,e:"could/couldn't 表示過去的能力。"},
+{c:"情態動詞",q:"You ___ told me you were ill. I would have helped.",o:["should","should have","must have","could"],a:1,e:"should have + p.p. 表示「過去應該做卻沒做」。"},
+{c:"情態動詞",q:"You ___ smoke in the hospital. It's forbidden.",o:["needn't","mustn't","don't have to","couldn't"],a:1,e:"mustn't 表示禁止。"},
+/* --- 條件句 --- */
+{c:"條件句",q:"If it ___ tomorrow, we'll stay at home.",o:["will rain","rains","rained","is raining"],a:1,e:"第一類條件句：If + 現在簡單式, will + 原形。"},
+{c:"條件句",q:"If I ___ rich, I would travel around the world.",o:["am","was being","were","will be"],a:2,e:"第二類條件句(與現在事實相反)用 were，過去式表假設。"},
+{c:"條件句",q:"If you heat ice, it ___.",o:["melts","will melt slowly","melted","would melt"],a:0,e:"零條件句講科學事實，兩邊都用現在簡單式。"},
+{c:"條件句",q:"I would have come to your party if you ___ me.",o:["told","have told","had told","would tell"],a:2,e:"第三類條件句：If + had p.p., would have + p.p.。"},
+{c:"條件句",q:"___ you hurry, you'll miss the train.",o:["If","Unless","When","Although"],a:1,e:"Unless = If…not，「除非你快點，否則會錯過」。"},
+{c:"條件句",q:"I wish I ___ more free time.",o:["have","had","will have","having"],a:1,e:"wish + 過去式，表示與現在事實相反的願望。"},
+/* --- 被動語態 --- */
+{c:"被動語態",q:"This bridge ___ in 1890.",o:["built","was built","has built","is building"],a:1,e:"過去被動：was/were + p.p.。"},
+{c:"被動語態",q:"English ___ all over the world.",o:["speaks","is speaking","is spoken","has spoken"],a:2,e:"現在被動：am/is/are + p.p.。"},
+{c:"被動語態",q:"My car ___ at the moment, so I came by bus.",o:["is repairing","is being repaired","repairs","was repaired"],a:1,e:"現在進行被動：is being + p.p.。"},
+{c:"被動語態",q:"The results ___ next Monday.",o:["will announce","will be announced","are announcing","announced"],a:1,e:"未來被動：will be + p.p.。"},
+{c:"被動語態",q:"The window ___ by someone last night.",o:["broke","has broken","was broken","is broken"],a:2,e:"by someone 顯示是被動，且時間是 last night。"},
+{c:"被動語態",q:"I ___ my hair cut yesterday.",o:["did","had","made","took"],a:1,e:"have/had something done = 請別人做某事。"},
+/* --- 關係子句 --- */
+{c:"關係子句",q:"The man ___ lives next door is a doctor.",o:["which","who","whose","where"],a:1,e:"先行詞是人且當主詞，用 who。"},
+{c:"關係子句",q:"That's the hotel ___ we stayed last summer.",o:["which","who","where","whose"],a:2,e:"先行詞是地點且後面句子完整，用 where。"},
+{c:"關係子句",q:"She's the writer ___ books I really love.",o:["who","which","whose","whom"],a:2,e:"表示所有關係(她的書)用 whose。"},
+{c:"關係子句",q:"The film ___ we saw last night was boring.",o:["who","which","where","whom"],a:1,e:"先行詞是物品，用 which/that。"},
+{c:"關係子句",q:"Do you remember the day ___ we first met?",o:["which","where","when","who"],a:2,e:"先行詞是時間 the day，用 when。"},
+{c:"關係子句",q:"He's the boy ___ I told you about.",o:["whose","which","who","what"],a:2,e:"先行詞是人且當受詞，用 who/whom/that。"},
+/* --- 轉述句 --- */
+{c:"轉述句",q:"He said, \"I'm busy.\" → He said he ___ busy.",o:["is","was","has been","will be"],a:1,e:"轉述句時態往後退一格：am → was。"},
+{c:"轉述句",q:"She asked me where I ___.",o:["live","do live","lived","am living"],a:2,e:"間接問句用直述語序，且時態後退：live → lived。"},
+{c:"轉述句",q:"Tom told me he ___ finish it the next day.",o:["will","would","shall","is going to"],a:1,e:"will 在轉述句中變成 would。"},
+{c:"轉述句",q:"She asked if I ___ the film before.",o:["saw","have seen","had seen","did see"],a:2,e:"have seen 在轉述句中變成 had seen。"},
+{c:"轉述句",q:"He ___ me to close the window.",o:["said","told","spoke","talked"],a:1,e:"tell somebody to do something；said 後面不直接加人。"},
+/* --- 動名詞與不定詞 --- */
+{c:"動名詞/不定詞",q:"I really enjoy ___ to music before bed.",o:["listen","to listen","listening","listened"],a:2,e:"enjoy 後面接動名詞 V-ing。"},
+{c:"動名詞/不定詞",q:"He decided ___ a new laptop.",o:["buy","to buy","buying","bought"],a:1,e:"decide 後面接不定詞 to + V。"},
+{c:"動名詞/不定詞",q:"I'm looking forward to ___ you next month.",o:["see","seeing","saw","be seen"],a:1,e:"look forward to 的 to 是介系詞，後接 V-ing。"},
+{c:"動名詞/不定詞",q:"My parents made me ___ the truth.",o:["tell","to tell","telling","told"],a:0,e:"make/let + 受詞 + 原形動詞。"},
+{c:"動名詞/不定詞",q:"It's no use ___ about the past.",o:["worry","to worry","worrying","worried"],a:2,e:"It's no use + V-ing 是固定句型。"},
+{c:"動名詞/不定詞",q:"I'd rather ___ at home tonight.",o:["stay","to stay","staying","stayed"],a:0,e:"would rather + 原形動詞。"},
+{c:"動名詞/不定詞",q:"He avoided ___ my question.",o:["answer","to answer","answering","answered"],a:2,e:"avoid 後面接動名詞 V-ing。"},
+{c:"動名詞/不定詞",q:"She went to the shop ___ some bread.",o:["for buy","to buy","buying","for buying"],a:1,e:"表示目的用不定詞 to + V。"},
+/* --- 比較與程度 --- */
+{c:"比較/程度",q:"That's ___ film I've ever seen.",o:["worse","the worse","the worst","worst"],a:2,e:"「最…的」用最高級，前面加 the。"},
+{c:"比較/程度",q:"She sings much ___ than her sister.",o:["good","better","best","the better"],a:1,e:"than 前面用比較級；good 的比較級是 better。"},
+{c:"比較/程度",q:"It isn't ___ to go swimming today.",o:["enough warm","warm enough","too warm","so warm"],a:1,e:"enough 放在形容詞後面：adj + enough。"},
+{c:"比較/程度",q:"He was ___ tired ___ he fell asleep on the sofa.",o:["so / that","such / that","too / to","very / that"],a:0,e:"so + 形容詞 + that 子句。"},
+{c:"比較/程度",q:"It was ___ a good book that I read it twice.",o:["so","such","very","too"],a:1,e:"such + a/an + 形容詞 + 名詞 + that。"},
+{c:"比較/程度",q:"My bag is twice ___ heavy as yours.",o:["so","as","more","the same"],a:1,e:"as + 形容詞 + as 表示同等比較。"},
+{c:"比較/程度",q:"This coffee is ___ hot for me to drink.",o:["so","enough","too","very much"],a:2,e:"too + 形容詞 + to + V 表示「太…以致於不能…」。"},
+/* --- 片語動詞與介系詞 --- */
+{c:"片語動詞/介系詞",q:"I need to look ___ this word in the dictionary.",o:["after","up","for","into"],a:1,e:"look up = 查(字典)；look after = 照顧。"},
+{c:"片語動詞/介系詞",q:"We're running ___ of milk. Can you buy some?",o:["off","away","out","over"],a:2,e:"run out of = 用完、耗盡。"},
+{c:"片語動詞/介系詞",q:"Please turn ___ the music — it's too loud.",o:["down","on","up","into"],a:0,e:"turn down = 調小聲；turn up = 調大聲。"},
+{c:"片語動詞/介系詞",q:"My sister is very good ___ maths.",o:["in","at","on","for"],a:1,e:"be good at + 名詞/V-ing。"},
+{c:"片語動詞/介系詞",q:"I've always been interested ___ history.",o:["on","for","in","about"],a:2,e:"be interested in 是固定搭配。"},
+{c:"片語動詞/介系詞",q:"He apologised ___ being late.",o:["of","for","to","about being"],a:1,e:"apologise for + V-ing。"},
+{c:"片語動詞/介系詞",q:"Whether we go or not depends ___ the weather.",o:["of","in","on","to"],a:2,e:"depend on 是固定搭配。"},
+{c:"片語動詞/介系詞",q:"The plane took ___ exactly on time.",o:["off","up","in","over"],a:0,e:"take off = (飛機)起飛。"},
+{c:"片語動詞/介系詞",q:"I get ___ really well with my younger brother.",o:["on","up","over","through"],a:0,e:"get on with someone = 與某人相處融洽。"},
+{c:"片語動詞/介系詞",q:"Could you look ___ my cat while I'm away?",o:["up","for","after","at"],a:2,e:"look after = 照顧。"},
+{c:"片語動詞/介系詞",q:"I gave ___ smoking two years ago.",o:["up","in","away","off"],a:0,e:"give up = 戒除、放棄。"},
+/* --- 數量詞與冠詞 --- */
+{c:"數量詞/冠詞",q:"There isn't ___ milk left in the fridge.",o:["many","much","few","a lot"],a:1,e:"milk 是不可數名詞，否定句用 much。"},
+{c:"數量詞/冠詞",q:"___ of my friends live abroad.",o:["Much","Most","Every","Little"],a:1,e:"Most of + the/所有格 + 複數名詞。"},
+{c:"數量詞/冠詞",q:"She plays ___ piano beautifully.",o:["a","an","the","(no word)"],a:2,e:"play the + 樂器名稱。"},
+{c:"數量詞/冠詞",q:"His father is ___ honest man.",o:["a","an","the","(no word)"],a:1,e:"honest 的 h 不發音，母音開頭用 an。"},
+{c:"數量詞/冠詞",q:"There were ___ people at the concert — I couldn't move!",o:["too much","too many","enough","a little"],a:1,e:"people 是可數複數，用 too many。"},
+{c:"數量詞/冠詞",q:"I've got ___ money left, so I can buy us both a coffee.",o:["a little","a few","many","few"],a:0,e:"money 不可數，肯定語氣用 a little(還有一些)。"},
+/* --- 用字與搭配 --- */
+{c:"用字/搭配",q:"The concert was really ___ — everyone loved it.",o:["amazed","amazing","amaze","amazement"],a:1,e:"-ing 形容事物；-ed 形容人的感受。"},
+{c:"用字/搭配",q:"We were all ___ by the terrible news.",o:["shocking","shock","shocked","shockingly"],a:2,e:"人的感受用 -ed 形容詞。"},
+{c:"用字/搭配",q:"We need to ___ a decision before Friday.",o:["do","make","take out","give"],a:1,e:"make a decision 是固定搭配。"},
+{c:"用字/搭配",q:"Could you ___ me a favour?",o:["make","do","give","take"],a:1,e:"do somebody a favour = 幫某人一個忙。"},
+{c:"用字/搭配",q:"I usually ___ up at half past six.",o:["get","take","make","stand"],a:0,e:"get up = 起床。"},
+{c:"用字/搭配",q:"She's ___ a shower at the moment.",o:["doing","making","having","going"],a:2,e:"have/take a shower 是固定搭配。"},
+{c:"用字/搭配",q:"Although he was tired, he ___ working.",o:["kept on","gave up","took off","put out"],a:0,e:"keep on + V-ing = 持續做某事；Although 表示轉折。"}
+];
+
+/* ============ 題庫產生器：句型 × 詞彙插槽 ============ */
+/* 動詞表：[原形, 三單, V-ing, 過去式, 過去分詞] */
+const VB={
+play:["play","plays","playing","played","played"],
+watch:["watch","watches","watching","watched","watched"],
+study:["study","studies","studying","studied","studied"],
+finish:["finish","finishes","finishing","finished","finished"],
+clean:["clean","cleans","cleaning","cleaned","cleaned"],
+visit:["visit","visits","visiting","visited","visited"],
+call:["call","calls","calling","called","called"],
+cook:["cook","cooks","cooking","cooked","cooked"],
+walk:["walk","walks","walking","walked","walked"],
+work:["work","works","working","worked","worked"],
+help:["help","helps","helping","helped","helped"],
+wash:["wash","washes","washing","washed","washed"],
+paint:["paint","paints","painting","painted","painted"],
+invite:["invite","invites","inviting","invited","invited"],
+repair:["repair","repairs","repairing","repaired","repaired"],
+close:["close","closes","closing","closed","closed"],
+open:["open","opens","opening","opened","opened"],
+use:["use","uses","using","used","used"],
+book:["book","books","booking","booked","booked"],
+order:["order","orders","ordering","ordered","ordered"],
+tidy:["tidy","tidies","tidying","tidied","tidied"],
+practise:["practise","practises","practising","practised","practised"],
+answer:["answer","answers","answering","answered","answered"],
+deliver:["deliver","delivers","delivering","delivered","delivered"],
+check:["check","checks","checking","checked","checked"],
+eat:["eat","eats","eating","ate","eaten"],
+write:["write","writes","writing","wrote","written"],
+see:["see","sees","seeing","saw","seen"],
+take:["take","takes","taking","took","taken"],
+buy:["buy","buys","buying","bought","bought"],
+break:["break","breaks","breaking","broke","broken"],
+drive:["drive","drives","driving","drove","driven"],
+give:["give","gives","giving","gave","given"],
+speak:["speak","speaks","speaking","spoke","spoken"],
+sing:["sing","sings","singing","sang","sung"],
+run:["run","runs","running","ran","run"],
+swim:["swim","swims","swimming","swam","swum"],
+read:["read","reads","reading","read","read"],
+meet:["meet","meets","meeting","met","met"],
+lose:["lose","loses","losing","lost","lost"],
+find:["find","finds","finding","found","found"],
+send:["send","sends","sending","sent","sent"],
+build:["build","builds","building","built","built"],
+wear:["wear","wears","wearing","wore","worn"],
+forget:["forget","forgets","forgetting","forgot","forgotten"],
+leave:["leave","leaves","leaving","left","left"],
+make:["make","makes","making","made","made"],
+know:["know","knows","knowing","knew","known"],
+bring:["bring","brings","bringing","brought","brought"],
+catch:["catch","catches","catching","caught","caught"],
+teach:["teach","teaches","teaching","taught","taught"],
+win:["win","wins","winning","won","won"],
+ride:["ride","rides","riding","rode","ridden"],
+choose:["choose","chooses","choosing","chose","chosen"],
+grow:["grow","grows","growing","grew","grown"],
+draw:["draw","draws","drawing","drew","drawn"],
+sell:["sell","sells","selling","sold","sold"],
+pay:["pay","pays","paying","paid","paid"],
+spend:["spend","spends","spending","spent","spent"],
+wake:["wake","wakes","waking","woke","woken"],
+feed:["feed","feeds","feeding","fed","fed"],
+hide:["hide","hides","hiding","hid","hidden"]
+};
+/* 主詞池 */
+const S3=["Tom","Anna","My brother","My sister","Mr Brown","Julia","My cousin","The teacher","Peter","My neighbour"];
+const SP=["My friends","The students","Tom and Anna","My parents","The children","My classmates"];
+const SI=["I","We","They","You"];
+
+
+/* 通用受詞池 */
+const O={
+ sport:["baseball","tennis","basketball","football","badminton"],
+ music:["the piano","the guitar","the violin","the drums"],
+ food:["breakfast","dinner","lunch","a sandwich","some soup"],
+ thing:["the car","the window","the kitchen","his bike","the garden"],
+ media:["the news","a magazine","a novel","that article","the report"],
+ place:["the museum","the station","the library","the market","the beach"],
+ time:["every morning","every day","every weekend","twice a week","on Sundays"],
+ past:["last night","last week","yesterday","two days ago","last summer"],
+ subj:["maths","history","English","science","geography"]
+};
+const EXTRA={
+go:["go","goes","going","went","gone"],
+come:["come","comes","coming","came","come"],
+move:["move","moves","moving","moved","moved"],
+arrive:["arrive","arrives","arriving","arrived","arrived"],
+travel:["travel","travels","travelling","travelled","travelled"],
+stay:["stay","stays","staying","stayed","stayed"],
+join:["join","joins","joining","joined","joined"],
+live:["live","lives","living","lived","lived"],
+start:["start","starts","starting","started","started"],
+learn:["learn","learns","learning","learned","learned"],
+listen:["listen","listens","listening","listened","listened"],
+wait:["wait","waits","waiting","waited","waited"],
+plant:["plant","plants","planting","planted","planted"],
+collect:["collect","collects","collecting","collected","collected"],
+print:["print","prints","printing","printed","printed"],
+design:["design","designs","designing","designed","designed"],
+discover:["discover","discovers","discovering","discovered","discovered"],
+publish:["publish","publishes","publishing","published","published"],
+deliver:["deliver","delivers","delivering","delivered","delivered"],
+serve:["serve","serves","serving","served","served"],
+tell:["tell","tells","telling","told","told"],
+worry:["worry","worries","worrying","worried","worried"],
+talk:["talk","talks","talking","talked","talked"],
+stand:["stand","stands","standing","stood","stood"],
+sit:["sit","sits","sitting","sat","sat"],
+do:["do","does","doing","did","done"]
+};
+Object.assign(VB,EXTRA);
+
+/* opt(v) 回傳 4 個選項，索引 0 一定是正解 */
+const TPL=[
+/* ================= 時態 ================= */
+{c:"時態",s:"$S ___ $A $B.",S:"S3",A:O.sport,B:["every morning","every weekend","twice a week","on Sundays"],V:["play","practise"],
+ opt:v=>[v[1],v[0],v[2],v[3]],e:"表示習慣或例行公事用現在簡單式；第三人稱單數動詞要加 -s。"},
+{c:"時態",s:"$S ___ $A $B.",S:"SP",A:O.subj,B:["every day","after school","every evening"],V:["study","learn"],
+ opt:v=>[v[0],v[1],v[2],v[3]],e:"主詞是複數，現在簡單式動詞用原形，不加 -s。"},
+{c:"時態",s:"Look! $S ___ $A.",S:"S3",A:["the car","the kitchen","the window","the garden","his bike"],V:["repair","clean","paint","wash"],
+ opt:v=>["is "+v[2],v[1],"was "+v[2],"has "+v[4]],e:"Look! 表示此刻正在發生，用現在進行式 is/are + V-ing。"},
+{c:"時態",s:"Be quiet! $S ___ $A at the moment.",S:"SP",A:["for the exam","in the library","in the next room"],V:["study","work"],
+ opt:v=>["are "+v[2],v[0],"were "+v[2],"have "+v[4]],e:"at the moment 表示此刻正在進行；主詞是複數，用 are + V-ing。"},
+{c:"時態",s:"$S ___ $A $B.",S:"S3",A:O.food,B:O.past,V:["cook","eat","buy","make"],
+ opt:v=>[v[3],v[1],v[2],v[0]],e:"last night / yesterday / ago 等過去時間標記，一律用過去簡單式。"},
+{c:"時態",s:"While $S ___ $A, the phone rang.",S:"S3L",A:O.food,V:["cook","eat","make"],
+ opt:v=>["was "+v[2],v[3],"has "+v[4],"is "+v[2]],e:"while 引導的長動作用過去進行式，被短動作(rang)打斷。"},
+{c:"時態",s:"While $S ___ in the garden, it started to rain.",S:"SPL",V:["work","play","wait"],
+ opt:v=>["were "+v[2],v[3],"have "+v[4],"are "+v[2]],e:"複數主詞的過去進行式用 were + V-ing。"},
+{c:"時態",s:"$S ___ here since $A.",S:"S3",A:["2019","2020","last March","last year"],V:["work","live","study"],
+ opt:v=>["has "+v[4],v[3],"is "+v[2],v[1]],e:"since + 時間點，表示從過去持續到現在，用現在完成式 has/have + p.p.。"},
+{c:"時態",s:"$S ___ in this city for $A years.",S:"SP",A:["five","ten","three","twelve"],V:["live","work","stay"],
+ opt:v=>["have "+v[4],v[3],"are "+v[2],v[0]],e:"for + 一段時間，用現在完成式；主詞複數用 have + p.p.。"},
+{c:"時態",s:"$S hasn't ___ $A yet.",S:"S3",A:["the homework","the report","the email","the book"],V:["finish","write","read","send"],
+ opt:v=>[v[4],v[3],v[2],v[0]],e:"yet 是現在完成式的標誌；hasn't 後面接過去分詞。"},
+{c:"時態",s:"$S has just ___ $A.",S:"S3",A:["the email","the parcel","the message","the invitation"],V:["send","read","write"],
+ opt:v=>[v[4],v[3],v[2],v[1]],e:"just / already / yet 搭配現在完成式；has 後面接過去分詞。"},
+{c:"時態",s:"By the time $S arrived, the $A ___.",S:"SL",A:["film","concert","meeting","show"],V:["finish","start"],
+ opt:v=>["had "+v[4],v[3],"has "+v[4],"was "+v[2]],e:"兩件過去的事，較早發生的那件用過去完成式 had + p.p.。"},
+{c:"時態",s:"$S ___ $A tomorrow — it's all arranged.",S:"S3",A:["the museum","the manager","the doctor","the new office"],V:["visit","call"],
+ opt:v=>["is going to "+v[0],"is going to "+v[2],"will "+v[2],"goes to "+v[0]],e:"已經安排好的計畫用 be going to + 原形動詞。"},
+{c:"時態",s:"I'll $C you $A I ___ $B.",C:["phone","call","text","email"],A:["as soon as","when","after"],B:["there","home","back"],
+ W:["get","will get","got","am getting"],e:"as soon as / when / after 引導的時間子句，用現在簡單式代替未來式。"},
+{c:"時態",s:"$S ___ $A two years ago.",S:"S3",A:["to Japan","to Canada","to London","to another school"],V:["go","move"],
+ opt:v=>[v[3],"has "+v[4],"is "+v[2],v[1]],e:"ago 一定搭配過去簡單式，不能用現在完成式。"},
+{c:"時態",s:"$S ___ to $A three times.",S:"S3",A:["Japan","Italy","Australia","Korea"],V:["go"],
+ opt:v=>["has been","has gone","was been","is being"],e:"have/has been to = 去過並且已經回來；have gone to = 去了還沒回來。"},
+{c:"時態",s:"The train ___ at $A tomorrow morning.",A:["6:45","7:20","8:05","9:30"],V:["leave","arrive"],
+ opt:v=>[v[1],"is "+v[2]+" now","will "+v[2],v[3]],e:"時刻表、班次等固定安排，用現在簡單式表示未來。"},
+{c:"時態",s:"This time next week $S ___ on a beach in $A.",S:"SL",A:["Spain","Greece","Italy","Thailand"],V:["stay"],
+ opt:v=>["will be lying","will lie","am lying","lay"],e:"未來某個時間點正在進行的動作，用未來進行式 will be + V-ing。"},
+{c:"時態",s:"$S ___ $A when he was younger, but he doesn't now.",S:"M3",A:["a lot of sport","the guitar","in a band","every weekend"],V:["play"],
+ opt:v=>["used to play","use to play","is used to play","used to playing"],e:"used to + 原形動詞，表示過去的習慣（現在已經不做了）。"},
+{c:"時態",s:"$S ___ for the bus for twenty minutes now.",S:"S3",V:["wait"],
+ opt:v=>["has been waiting","is waiting","waits","was waiting"],e:"for + 一段時間且動作持續到現在，用現在完成進行式 has been + V-ing。"},
+{c:"時態",s:"What ___ $S doing at eight o'clock $A?",S:"YOU",A:["last night","yesterday evening","last Sunday"],
+ W:["were","was","did","have"],e:"過去進行式的疑問句；主詞 I/we/they/you 搭配 were + V-ing。"},
+{c:"時態",s:"$S ___ $A when I arrived.",S:"S3",A:["a magazine","a letter","the report"],V:["read","write"],
+ opt:v=>["was "+v[2],v[1],"has "+v[4],"is "+v[2]],e:"when 引導的短動作發生時，背景的長動作用過去進行式。"},
+
+/* ================= 情態動詞 ================= */
+{c:"情態動詞",s:"You ___ wear a helmet when you ride a $A. It's the law.",A:["motorbike","scooter","bike"],
+ W:["must","might","could","may"],e:"must 表示強烈的義務或法律規定。"},
+{c:"情態動詞",s:"You ___ be hungry — you've just had $A!",A:["lunch","dinner","a big breakfast","a huge sandwich"],
+ W:["can't","mustn't","shouldn't","needn't"],e:"can't 表示「不可能」的推測；mustn't 是「禁止」。"},
+{c:"情態動詞",s:"Take an umbrella — it ___ $A later.",A:["rain","snow"],
+ W:["might","must","can","should"],e:"might 表示不確定的可能性。"},
+{c:"情態動詞",s:"Entry to the $A is free, so you ___ pay anything.",A:["museum","gallery","exhibition","park"],
+ W:["don't have to","mustn't","shouldn't","can't"],e:"don't have to = 不必；mustn't = 不可以。兩者最常混淆。"},
+{c:"情態動詞",s:"His $A is outside, so he ___ be at home.",A:["car","bike","van"],
+ W:["must","can't","might not","needn't"],e:"有明確證據的肯定推測用 must。"},
+{c:"情態動詞",s:"___ you help me $A this box, please?",A:["carry","move","lift"],
+ W:["Could","Must","Should","May"],e:"Could you…? 是禮貌的請求。"},
+{c:"情態動詞",s:"When I was five, I ___ $A at all.",A:["swim","ride a bike","speak English","play chess"],
+ W:["couldn't","mustn't","shouldn't","wouldn't"],e:"could / couldn't 表示過去的能力。"},
+{c:"情態動詞",s:"You ___ told me you were $A. I would have helped.",A:["ill","in trouble","so busy","worried"],
+ W:["should have","should","must have","could"],e:"should have + p.p. 表示「過去應該做卻沒做」的後悔。"},
+{c:"情態動詞",s:"You ___ smoke in the $A. It's forbidden.",A:["hospital","cinema","classroom","library"],
+ W:["mustn't","needn't","don't have to","couldn't"],e:"mustn't 表示禁止。"},
+{c:"情態動詞",s:"The office light is still on — $S ___ be working late.",S:"S3L",
+ W:["must","can't","needn't","wouldn't"],e:"根據事實做肯定推測用 must（一定是）。"},
+
+/* ================= 條件句 ================= */
+{c:"條件句",s:"If it ___ tomorrow, we'll stay at $A.",A:["home","my place","the hotel"],
+ W:["rains","will rain","rained","is raining"],e:"第一類條件句：If + 現在簡單式, 主句用 will + 原形。"},
+{c:"條件句",s:"If $S ___ rich, $S2 would travel around the $A.",S:"SL",A:["world","country"],
+ W:["were","am","will be","have been"],e:"第二類條件句（與現在事實相反）用過去式，be 動詞用 were。"},
+{c:"條件句",s:"If you heat $A, it ___.",A:["ice","butter","chocolate"],
+ W:["melts","will be melting","melted","would melt"],e:"零條件句講科學事實，if 子句和主句都用現在簡單式。"},
+{c:"條件句",s:"$S would have come to the $A if you ___ me.",S:"SI",A:["party","concert","meeting","wedding"],
+ W:["had told","told","have told","would tell"],e:"第三類條件句：If + had p.p., 主句用 would have + p.p.。"},
+{c:"條件句",s:"___ you hurry, you'll miss the $A.",A:["train","bus","flight","last bus"],
+ W:["Unless","If","When","Although"],e:"Unless = If…not，「除非你快點，否則會錯過」。"},
+{c:"條件句",s:"$S wish $S2 ___ more $A.",S:"SI",A:["free time","money","patience"],
+ W:["had","have","will have","having"],e:"wish + 過去式，表示與現在事實相反的願望。"},
+{c:"條件句",s:"If I ___ you, I'd $A the $B.",A:["call","email","phone"],B:["manager","teacher","doctor"],
+ W:["were","am","will be","would be"],e:"If I were you… 是給建議的固定句型（第二類條件句）。"},
+{c:"條件句",s:"If we ___ now, we'll be there by $A.",A:["six","noon","lunchtime","eight"],
+ W:["leave","will leave","left","would leave"],e:"第一類條件句：if 子句用現在簡單式，不用 will。"}
+];
+const O2={past:["last night","last week","yesterday","two days ago"],subj:["maths","history","English","science"]};
+const TPL2=[
+/* ================= 被動語態 ================= */
+{c:"被動語態",s:"The $A ___ in $B.",A:["bridge","castle","museum","theatre"],B:["1890","1925","1876","1902"],V:["build","design"],
+ opt:v=>["was "+v[4],v[3],"has "+v[4],"is "+v[2]],e:"過去被動語態：was / were + 過去分詞。"},
+{c:"被動語態",s:"$A ___ all over the world.",A:["English","Spanish","French","Chinese"],V:["speak","study","teach"],
+ opt:v=>["is "+v[4],v[1],"is "+v[2],"has "+v[4]],e:"現在被動語態：am / is / are + 過去分詞。"},
+{c:"被動語態",s:"My $A ___ at the moment, so I can't use it.",A:["car","laptop","phone","bike"],V:["repair","check","clean"],
+ opt:v=>["is being "+v[4],"is "+v[2],v[1],"was "+v[4]],e:"現在進行被動：is / are being + 過去分詞。"},
+{c:"被動語態",s:"The results ___ next $A.",A:["Monday","week","Friday","month"],V:["publish","send","print"],
+ opt:v=>["will be "+v[4],"will "+v[0],"are "+v[2],v[3]],e:"未來被動語態：will be + 過去分詞。"},
+{c:"被動語態",s:"The $A ___ by someone $B.",A:["window","gate","door","lock"],B:O2.past,V:["break","open"],
+ opt:v=>["was "+v[4],v[3],"has "+v[4],"is "+v[2]],e:"by someone 表示動作由別人做，是被動語態的線索。"},
+{c:"被動語態",s:"$S ___ the $B repaired $A.",S:"S3",A:O2.past,B:["car","roof","laptop","bike"],
+ W:["had","did","made","took"],e:"have / had something done = 請別人替自己做某事。"},
+{c:"被動語態",s:"This $A ___ by a famous $B.",A:["song","poem","novel","picture"],B:["writer","artist","musician"],V:["write","design"],
+ opt:v=>["was "+v[4],v[3],"has "+v[4],"is "+v[2]],e:"作品「被」某人創作，用被動語態 was + 過去分詞。"},
+{c:"被動語態",s:"The letters ___ every $A.",A:["morning","day","Friday","Monday"],V:["deliver","collect","print"],
+ opt:v=>["are "+v[4],v[0],"are "+v[2],v[3]],e:"複數主詞的現在被動：are + 過去分詞。"},
+{c:"被動語態",s:"The new $A ___ next year.",A:["hospital","library","stadium","bridge"],V:["build","open"],
+ opt:v=>["will be "+v[4],"will "+v[0],"is "+v[2],v[3]],e:"未來被動：will be + 過去分詞。"},
+
+/* ================= 關係子句 ================= */
+{c:"關係子句",s:"The $A ___ lives next door is a $B.",A:["man","woman","student","teacher"],B:["doctor","nurse","dentist","engineer"],
+ W:["who","which","whose","where"],e:"先行詞是人，而且在子句中當主詞，用 who。"},
+{c:"關係子句",s:"That's the $A ___ we stayed last summer.",A:["hotel","village","town","house"],
+ W:["where","which","who","whose"],e:"先行詞是地點，而且後面句子完整，用關係副詞 where。"},
+{c:"關係子句",s:"She's the $A ___ books I really love.",A:["writer","author","poet","novelist"],
+ W:["whose","who","which","whom"],e:"表示「某人的…」這種所有關係，用 whose。"},
+{c:"關係子句",s:"The $A ___ we saw last night was $B.",A:["film","play","show","musical"],B:["boring","excellent","terrible"],
+ W:["which","who","where","whom"],e:"先行詞是事物，用 which 或 that。"},
+{c:"關係子句",s:"Do you remember the $A ___ we first met?",A:["day","summer","evening","year"],
+ W:["when","which","where","who"],e:"先行詞是時間，用關係副詞 when。"},
+{c:"關係子句",s:"He's the $A ___ I told you about.",A:["boy","man","student","friend"],
+ W:["who","whose","which","what"],e:"先行詞是人且在子句中當受詞，用 who / whom / that。"},
+{c:"關係子句",s:"This is the $A ___ my father works.",A:["factory","office","school","hospital"],
+ W:["where","which","who","when"],e:"先行詞是地點且子句完整，用 where。"},
+{c:"關係子句",s:"The $A ___ won the prize is only $B.",A:["girl","boy","student","child"],B:["twelve","fourteen","ten","eleven"],
+ W:["who","which","whose","where"],e:"先行詞是人且在子句中當主詞，用 who。"},
+
+/* ================= 轉述句 ================= */
+{c:"轉述句",s:"He said, \"I'm $A.\" → He said he ___ $A.",A:["busy","tired","ready","late"],
+ W:["was","is","has been","will be"],e:"轉述句時態往後退一格：am / is → was。"},
+{c:"轉述句",s:"She asked me where $S ___.",S:"SL",
+ W:["lived","live","do live","am living"],e:"間接問句用直述句語序，而且時態要往後退：live → lived。"},
+{c:"轉述句",s:"$S told me he ___ finish it the next day.",S:"M3",
+ W:["would","will","shall","is going to"],e:"直接引語的 will，在轉述句中變成 would。"},
+{c:"轉述句",s:"She asked if $S ___ the $A before.",S:"SL",A:["film","book","place","song"],
+ W:["had seen","have seen","saw","did see"],e:"直接引語的 have seen，在轉述句中變成 had seen。"},
+{c:"轉述句",s:"He ___ me to close the $A.",A:["window","door","gate","box"],
+ W:["told","said","spoke","talked"],e:"tell somebody to do something；said 後面不能直接接人。"},
+{c:"轉述句",s:"$S said he ___ very $A.",S:"M3",A:["tired","hungry","worried","nervous"],
+ W:["was","is","has been","will be"],e:"轉述過去說過的話，形容詞前的 be 動詞要退成過去式。"},
+{c:"轉述句",s:"She asked me what time the $A ___.",A:["film","concert","train","meeting"],
+ W:["started","starts","will start","has started"],e:"間接問句中時態往後退：starts → started。"},
+
+/* ================= 動名詞 / 不定詞 ================= */
+{c:"動名詞/不定詞",s:"$S really enjoys ___ to $A.",S:"S3",A:["music","the radio","podcasts"],V:["listen"],
+ opt:v=>[v[2],v[0],"to "+v[0],v[3]],e:"enjoy 後面固定接動名詞 V-ing。"},
+{c:"動名詞/不定詞",s:"$S decided ___ a new $A.",S:"S3",A:["laptop","phone","bike","camera"],V:["buy","design"],
+ opt:v=>["to "+v[0],v[0],v[2],v[3]],e:"decide 後面固定接不定詞 to + 原形動詞。"},
+{c:"動名詞/不定詞",s:"I'm looking forward to ___ you next $A.",A:["month","week","summer","year"],V:["see","meet","visit"],
+ opt:v=>[v[2],v[0],"to "+v[0],v[3]],e:"look forward to 的 to 是介系詞，後面要接 V-ing。"},
+{c:"動名詞/不定詞",s:"My $A made me ___ the truth.",A:["parents","teacher","boss","coach"],V:["tell"],
+ opt:v=>[v[0],"to "+v[0],v[2],v[3]],e:"make / let + 受詞 + 原形動詞（不加 to）。"},
+{c:"動名詞/不定詞",s:"It's no use ___ about the $A.",A:["past","exam","result","weather"],V:["worry"],
+ opt:v=>[v[2],v[0],"to "+v[0],v[3]],e:"It's no use + V-ing 是固定句型。"},
+{c:"動名詞/不定詞",s:"I'd rather ___ at home $A.",A:["tonight","this evening","on Sunday"],V:["stay"],
+ opt:v=>[v[0],"to "+v[0],v[2],v[3]],e:"would rather 後面接原形動詞，不加 to。"},
+{c:"動名詞/不定詞",s:"$S avoided ___ my $A.",S:"S3",A:["question","email","call","message"],V:["answer"],
+ opt:v=>[v[2],v[0],"to "+v[0],v[3]],e:"avoid 後面固定接動名詞 V-ing。"},
+{c:"動名詞/不定詞",s:"$S went to the $A ___ some bread.",S:"S3",A:["shop","bakery","market"],V:["buy"],
+ opt:v=>["to "+v[0],"for "+v[0],v[2],"for "+v[2]],e:"表示「目的」用不定詞 to + 原形動詞。"},
+{c:"動名詞/不定詞",s:"$S finished ___ the $A an hour ago.",S:"S3",A:["report","essay","letter","email"],V:["write","read","check"],
+ opt:v=>[v[2],"to "+v[0],v[0],v[3]],e:"finish 後面固定接動名詞 V-ing。"},
+{c:"動名詞/不定詞",s:"$S promised ___ me after $A.",S:"S3",A:["work","school","lunch","the meeting"],V:["call","help","visit"],
+ opt:v=>["to "+v[0],v[2],v[0],v[3]],e:"promise 後面固定接不定詞 to + 原形動詞。"},
+
+/* ================= 比較 / 程度 ================= */
+{c:"比較/程度",s:"That's ___ $A I've ever seen.",A:["film","play","show"],
+ W:["the worst","worse","worst","the worse"],e:"「最…的」用最高級，前面要加 the。"},
+{c:"比較/程度",s:"$S sings much ___ than anyone else in the $A.",S:"S3",A:["choir","class","band","group"],
+ W:["better","good","best","the better"],e:"than 前面用比較級；good 的比較級是 better。"},
+{c:"比較/程度",s:"It isn't ___ to go $A today.",A:["swimming","running","out","cycling"],
+ W:["warm enough","enough warm","too warm","so warm"],e:"enough 要放在形容詞後面：adj + enough。"},
+{c:"比較/程度",s:"He was ___ tired ___ he fell asleep on the $A.",A:["sofa","train","bus","floor"],
+ W:["so / that","such / that","too / to","very / that"],e:"so + 形容詞 + that 子句。"},
+{c:"比較/程度",s:"It was ___ a good $A that I read it twice.",A:["book","novel","story"],
+ W:["such","so","very","too"],e:"such + a/an + 形容詞 + 名詞 + that；so 後面只能接形容詞。"},
+{c:"比較/程度",s:"My $A is twice ___ heavy as yours.",A:["bag","suitcase","box","backpack"],
+ W:["as","so","more","the same"],e:"as + 形容詞 + as 表示同等比較。"},
+{c:"比較/程度",s:"This $A is ___ hot for me to drink.",A:["coffee","tea","soup","chocolate"],
+ W:["too","so","enough","very much"],e:"too + 形容詞 + to + 原形動詞，表示「太…以致於不能…」。"},
+{c:"比較/程度",s:"$A is ___ expensive city in the country.",A:["London","Tokyo","Paris","Sydney"],
+ W:["the most","most","more","the more"],e:"三者以上比較用最高級：the most + 長形容詞。"},
+{c:"比較/程度",s:"He runs ___ than anyone else in the $A.",A:["team","class","school","club"],
+ W:["faster","fast","fastest","more fast"],e:"than 前面用比較級；fast 的比較級是 faster。"},
+
+/* ================= 片語動詞 / 介系詞 ================= */
+{c:"片語動詞/介系詞",s:"I need to look ___ this $A in the dictionary.",A:["word","phrase","expression"],
+ W:["up","after","for","into"],e:"look up = 查(字典)；look after = 照顧。"},
+{c:"片語動詞/介系詞",s:"We're running ___ of $A. Can you buy some?",A:["milk","sugar","bread","coffee"],
+ W:["out","off","away","over"],e:"run out of = 用完、耗盡。"},
+{c:"片語動詞/介系詞",s:"Please turn ___ the $A — it's too loud.",A:["music","TV","radio"],
+ W:["down","on","up","into"],e:"turn down = 調小聲；turn up = 調大聲。"},
+{c:"片語動詞/介系詞",s:"$S is very good ___ $A.",S:"S3",A:O2.subj,
+ W:["at","in","on","for"],e:"be good at + 名詞 / V-ing 是固定搭配。"},
+{c:"片語動詞/介系詞",s:"I've always been interested ___ $A.",A:["history","art","science","music"],
+ W:["in","on","for","about"],e:"be interested in 是固定搭配。"},
+{c:"片語動詞/介系詞",s:"He apologised ___ being $A.",A:["late","rude","noisy","careless"],
+ W:["for","of","to","about"],e:"apologise for + V-ing 是固定搭配。"},
+{c:"片語動詞/介系詞",s:"Whether we go or not depends ___ the $A.",A:["weather","price","time","traffic"],
+ W:["on","of","in","to"],e:"depend on 是固定搭配。"},
+{c:"片語動詞/介系詞",s:"The plane took ___ exactly on $A.",A:["time","schedule"],
+ W:["off","up","in","over"],e:"take off = (飛機)起飛。"},
+{c:"片語動詞/介系詞",s:"$S gets ___ really well with $A.",S:"S3",A:["everyone","the new student","the neighbours"],
+ W:["on","up","over","through"],e:"get on with somebody = 與某人相處融洽。"},
+{c:"片語動詞/介系詞",s:"Could you look ___ my $A while I'm away?",A:["cat","dog","plants","flat"],
+ W:["after","up","for","at"],e:"look after = 照顧。"},
+{c:"片語動詞/介系詞",s:"$S gave ___ smoking $A ago.",S:"S3",A:["two years","three years","a year"],
+ W:["up","in","away","off"],e:"give up = 戒除、放棄。"},
+{c:"片語動詞/介系詞",s:"I'm looking ___ my $A. Have you seen them?",A:["keys","glasses","gloves"],
+ W:["for","after","up","into"],e:"look for = 尋找；look after = 照顧。"},
+
+/* ================= 數量詞 / 冠詞 ================= */
+{c:"數量詞/冠詞",s:"There isn't ___ $A left in the fridge.",A:["milk","butter","juice","cheese"],
+ W:["much","many","few","a lot"],e:"這些都是不可數名詞，否定句用 much。"},
+{c:"數量詞/冠詞",s:"___ of my friends live $A.",A:["abroad","in London","near the school"],
+ W:["Most","Much","Every","Little"],e:"Most of + 所有格 + 複數名詞。"},
+{c:"數量詞/冠詞",s:"$S plays ___ $A beautifully.",S:"S3",A:["piano","violin","guitar"],
+ W:["the","a","an","(不填)"],e:"play the + 樂器名稱，樂器前面要加 the。"},
+{c:"數量詞/冠詞",s:"His father is ___ $A man.",A:["honest","old","interesting","unusual"],
+ W:["an","a","the","(不填)"],e:"這些字的發音都以母音開頭（honest 的 h 不發音），要用 an。"},
+{c:"數量詞/冠詞",s:"There were ___ people at the $A — I couldn't move!",A:["concert","festival","match","market"],
+ W:["too many","too much","enough","a little"],e:"people 是可數複數名詞，用 too many。"},
+{c:"數量詞/冠詞",s:"I've got ___ money left, so I can buy us both a $A.",A:["coffee","sandwich","ticket"],
+ W:["a little","a few","many","few"],e:"money 是不可數名詞，肯定語氣用 a little（還有一些）。"},
+{c:"數量詞/冠詞",s:"How ___ $A do you need?",A:["eggs","tickets","chairs","boxes"],
+ W:["many","much","little","a lot"],e:"可數複數名詞用 how many；不可數用 how much。"},
+{c:"數量詞/冠詞",s:"We had ___ time, so we visited the $A too.",A:["castle","market","museum","garden"],
+ W:["enough","many","a few","much of"],e:"time 是不可數名詞；enough + 名詞表示「足夠的」。"},
+
+/* ================= 用字 / 搭配 ================= */
+{c:"用字/搭配",s:"The $A was really ___ — everyone loved it.",A:["concert","film","show","trip"],
+ W:["amazing","amazed","amaze","amazement"],e:"-ing 形容事物本身；-ed 形容人的感受。"},
+{c:"用字/搭配",s:"We were all ___ by the $A news.",A:["terrible","sad","unexpected"],
+ W:["shocked","shocking","shock","shockingly"],e:"人的感受用 -ed 形容詞。"},
+{c:"用字/搭配",s:"We need to ___ a decision before $A.",A:["Friday","the meeting","Monday","lunch"],
+ W:["make","do","take out","give"],e:"make a decision 是固定動詞搭配。"},
+{c:"用字/搭配",s:"Could you ___ me a favour and $A the door?",A:["close","open","lock"],
+ W:["do","make","give","take"],e:"do somebody a favour = 幫某人一個忙。"},
+{c:"用字/搭配",s:"$S usually ___ up at half past $A.",S:"S3",A:["six","seven","five"],
+ W:["gets","takes","makes","stands"],e:"get up = 起床。"},
+{c:"用字/搭配",s:"$S is ___ a shower at the moment.",S:"S3",
+ W:["having","doing","making","going"],e:"have a shower / take a shower 是固定搭配。"},
+{c:"用字/搭配",s:"Although $S was $B, he ___ working.",S:"M3L",B:["tired","ill","very busy"],A:["tired","ill","very busy"],
+ W:["kept on","gave up","took off","put out"],e:"keep on + V-ing = 持續做某事；Although 表示語氣轉折。"},
+{c:"用字/搭配",s:"The $A was so ___ that I fell asleep.",A:["film","lecture","speech","programme"],
+ W:["boring","bored","bore","boredom"],e:"事物本身無聊用 boring；人覺得無聊用 bored。"},
+{c:"用字/搭配",s:"$S ___ a lot of time on this $A.",S:"S3",A:["project","essay","report","design"],
+ W:["spent","took","passed","used"],e:"spend + 時間 + on + 名詞 是固定搭配。"}
+];
+const PL=["My friends","The students","My parents","The children","My classmates","Tom and Anna"];
+const N3=["Tom","Anna","My brother","My sister","Julia","Peter","Mr Brown","My cousin"];
+const TIMEADV=["every morning","every weekend","after school","at weekends","twice a week"];
+const PAST=["last night","last week","yesterday","last Sunday","two days ago"];
+const PLACE=["the library","the station","the market","the museum","the sports centre"];
+const TPL3=[
+/* ---- 時態（補充） ---- */
+{c:"時態",s:"$S ___ to $A $B.",S:"S3",A:PLACE,B:TIMEADV,V:["walk","drive","go"],
+ opt:v=>[v[1],v[0],v[2],v[3]],e:"表示規律習慣用現在簡單式；第三人稱單數動詞加 -s。"},
+{c:"時態",s:"$S ___ to $A $B.",S:"SP",A:PLACE,B:PAST,V:["walk","drive","go"],
+ opt:v=>[v[3],v[0],v[2],v[1]],e:"過去時間標記(last / yesterday / ago)一律用過去簡單式。"},
+{c:"時態",s:"$S ___ never ___ such a beautiful $A.",S:"SI",A:["beach","garden","building","view"],V:["see"],
+ opt:v=>["have / seen","have / saw","has / seen","did / see"],e:"never 常搭配現在完成式；I/we/they/you 用 have + 過去分詞。"},
+{c:"時態",s:"$S ___ $A when the teacher came in.",S:"SP",A:["about the exam","in the corridor","near the window"],V:["talk","wait","stand"],
+ opt:v=>["were "+v[2],v[3],"have "+v[4],"are "+v[2]],e:"某個過去時間點正在進行的動作，用過去進行式 were + V-ing。"},
+{c:"時態",s:"Don't phone $S now — $S2 ___ dinner.",S:"M3L",V:["cook","eat","make","serve"],
+ opt:v=>["is "+v[2],v[1],"was "+v[2],"has "+v[4]],e:"now 表示此刻正在進行，用現在進行式 is + V-ing。"},
+{c:"時態",s:"How long ___ $S known $A?",S:"YOU",A:["each other","the Browns"],
+ W:["have","has","did","do"],e:"How long + 現在完成式；主詞 I/we/they/you 用 have。"},
+{c:"時態",s:"$S ___ already ___ the $A when I called.",S:"S3",A:["report","email","homework","letter"],V:["finish","send","write"],
+ opt:v=>["had / "+v[4],"has / "+v[4],"was / "+v[2],"did / "+v[0]],e:"比另一個過去動作更早發生，用過去完成式 had + p.p.。"},
+{c:"時態",s:"$S ___ $A for three hours before the rain stopped.",S:"SP",A:["outside","in the park","at the bus stop"],V:["wait","play","work"],
+ opt:v=>["had been "+v[2],"have been "+v[2],"are "+v[2],v[1]],e:"在過去某時之前已持續進行，用過去完成進行式 had been + V-ing。"},
+{c:"時態",s:"By next $A, I ___ in this school for $B years.",A:["June","year","summer","term"],B:["ten","five","three"],
+ W:["will have been","will be","have been","was"],e:"到未來某時為止累計的時間，用未來完成式 will have been。"},
+{c:"時態",s:"$S ___ $A since he moved here.",S:"M3",A:["the guitar","tennis","photography","Chinese"],V:["play","study","practise"],
+ opt:v=>["has "+v[4],v[3],"is "+v[2],v[1]],e:"since + 過去的起點，主句用現在完成式。"},
+
+/* ---- 情態動詞（補充） ---- */
+{c:"情態動詞",s:"$S ___ to work $A because the car broke down.",S:"S3",A:["yesterday","last Monday","this morning"],
+ W:["had","must","should","can"],e:"must 沒有過去式，過去的義務要用 had to。"},
+{c:"情態動詞",s:"$S ___ finish the $A before Friday, or the teacher will be angry.",S:"SI",A:["project","essay","report","homework"],
+ W:["must","might","could","would"],e:"must 表示強烈的必要性或義務。"},
+{c:"情態動詞",s:"There's no reply. $S ___ be out at the $A.",S:"S3",A:["shops","cinema","gym","park"],
+ W:["might","must not","can't","shouldn't"],e:"根據不確定的線索做推測，用 might / may / could。"},
+{c:"情態動詞",s:"You ___ eat so much $A — it's not good for you.",A:["sugar","chocolate","fried food","salt"],
+ W:["shouldn't","mustn't be","don't","couldn't"],e:"shouldn't 用來給建議，表示「不該」。"},
+{c:"情態動詞",s:"$S ___ speak three languages when $S2 was $A.",S:"M3",A:["ten","twelve","fifteen","a child"],
+ W:["could","can","must","should"],e:"could 表示過去的能力。"},
+{c:"情態動詞",s:"___ I bring my $A to the $B tomorrow?",A:["dictionary","notebook","laptop","textbook"],B:["lesson","class","meeting","test"],
+ W:["Should","Am","Do","Will to"],e:"Should I…? 用來徵詢意見或請求指示。"},
+
+/* ---- 條件句（補充） ---- */
+{c:"條件句",s:"If $S ___ harder, $S2 would have passed the $A.",S:"M3L",A:["exam","test","interview","course"],
+ W:["had studied","studied","has studied","would study"],e:"第三類條件句：If + had p.p., 主句 would have + p.p.。"},
+{c:"條件句",s:"You'll be late for the $A ___ you leave now.",A:["meeting","train","lesson","flight"],
+ W:["unless","if","when","although"],e:"unless = if…not，「除非你現在走，否則會遲到」。"},
+{c:"條件句",s:"If $S ___ the answer, $S2 would tell you.",S:"M3L",
+ W:["knew","knows","has known","will know"],e:"與現在事實相反的假設，if 子句用過去式。"},
+{c:"條件句",s:"I'd buy that $A if it ___ so expensive.",A:["jacket","laptop","bike","camera"],
+ W:["weren't","isn't","won't be","hasn't been"],e:"第二類條件句，be 動詞用 were（各人稱通用）。"},
+{c:"條件句",s:"If you ___ this button, the machine ___.",A:["press","push"],
+ W:["press / starts","will press / starts","press / will starting","pressed / starts"],e:"零條件句講必然結果，兩邊都用現在簡單式。"},
+{c:"條件句",s:"$S wishes $S2 ___ play the $A.",S:"M3",A:["piano","guitar","violin","drums"],
+ W:["could","can","will","would be able"],e:"wish + could + 原形動詞，表示與現在能力相反的願望。"},
+
+/* ---- 被動語態（補充） ---- */
+{c:"被動語態",s:"The $A ___ every $B by the cleaners.",A:["office","classroom","hall","kitchen"],B:["morning","evening","Friday"],V:["clean","check","tidy"],
+ opt:v=>["is "+v[4],v[1],"is "+v[2],"has "+v[4]],e:"現在被動語態：is + 過去分詞。"},
+{c:"被動語態",s:"These $A ___ in $B.",A:["cars","shoes","computers","toys"],B:["Japan","Germany","Italy","Korea"],V:["make","design","build"],
+ opt:v=>["are "+v[4],v[0],"are "+v[2],v[3]],e:"複數主詞的現在被動：are + 過去分詞。"},
+{c:"被動語態",s:"The $A ___ already ___ when we arrived.",A:["food","room","table","stage"],V:["serve","clean","check"],
+ opt:v=>["had / been "+v[4],"has / been "+v[4],"was / "+v[2],"had / "+v[2]],e:"過去完成被動：had been + 過去分詞。"},
+{c:"被動語態",s:"Nothing ___ about the problem so far.",V:["do"],
+ W:["has been done","has done","was doing","is doing"],e:"現在完成被動：has been + 過去分詞。"},
+{c:"被動語態",s:"The $A can ___ online from $B.",A:["tickets","books","seats","forms"],B:["Monday","tomorrow","next week"],V:["book","order"],
+ opt:v=>["be "+v[4],v[0],"being "+v[4],v[3]],e:"情態動詞的被動：can / must / will + be + 過去分詞。"},
+
+/* ---- 關係子句（補充） ---- */
+{c:"關係子句",s:"The $A ___ I bought $B was quite cheap.",A:["jacket","bike","phone","table"],B:PAST,
+ W:["which","who","where","whose"],e:"先行詞是事物且在子句中當受詞，用 which / that。"},
+{c:"關係子句",s:"$S is the person ___ helped me with the $A.",S:"M3",A:["project","homework","website","report"],
+ W:["who","which","whose","where"],e:"先行詞是人且在子句中當主詞，用 who / that。"},
+{c:"關係子句",s:"That's the $A ___ roof was damaged in the $B.",A:["house","building","school","shop"],B:["storm","fire","earthquake"],
+ W:["whose","which","who","where"],e:"表示「它的…」這種所有關係，物品也可以用 whose。"},
+{c:"關係子句",s:"The $A, ___ is next to the $B, is closed today.",A:["café","bank","library","gym"],B:["station","market","school","park"],
+ W:["which","who","what","whose"],e:"非限定關係子句（有逗號）中，事物只能用 which，不能用 that。"},
+{c:"關係子句",s:"This is the $A ___ I've been looking for all $B.",A:["book","key","photo","file"],B:["day","morning","week"],
+ W:["that","who","where","whose"],e:"先行詞是事物且當受詞，用 that / which。"},
+
+/* ---- 轉述句（補充） ---- */
+{c:"轉述句",s:"\"$A the window,\" she said. → She told me ___ the window.",A:["Open","Close","Clean"],
+ W:["to open","open","opening","that open"],e:"轉述祈使句用 tell somebody to + 原形動詞。"},
+{c:"轉述句",s:"$S said that $S2 ___ to the $A the day before.",S:"M3",A:["cinema","museum","market","beach"],
+ W:["had gone","has gone","went","was going"],e:"轉述句中過去式往後退成過去完成式。"},
+{c:"轉述句",s:"She asked me ___ I liked the $A.",A:["film","food","hotel","music"],
+ W:["if","that","what","which"],e:"轉述 Yes/No 問句用 if 或 whether。"},
+{c:"轉述句",s:"He told $A that he ___ help $B.",A:["me","us","them","Anna"],B:["the next day","the following week","soon"],
+ W:["would","will","shall","is going to"],e:"will 在轉述句中要變成 would。"},
+{c:"轉述句",s:"$S said $S2 ___ finished the $A already.",S:"M3",A:["book","report","game","course"],
+ W:["had","has","have","was"],e:"has finished 在轉述句中變成 had finished。"},
+
+/* ---- 動名詞/不定詞（補充） ---- */
+{c:"動名詞/不定詞",s:"$S doesn't mind ___ the $A at the weekend.",S:"S3",A:["dishes","shopping","cleaning","garden"],V:["do"],
+ opt:v=>[v[2],v[0],"to "+v[0],v[3]],e:"mind 後面固定接動名詞 V-ing。"},
+{c:"動名詞/不定詞",s:"$S hopes ___ $A next year.",S:"S3",A:["to Japan","abroad","to university","to London"],V:["go","move","travel"],
+ opt:v=>["to "+v[0],v[2],v[0],v[3]],e:"hope 後面固定接不定詞 to + 原形動詞。"},
+{c:"動名詞/不定詞",s:"$S suggested ___ to the $A instead.",S:"S3",A:["beach","cinema","park","museum"],V:["go","walk","drive"],
+ opt:v=>[v[2],"to "+v[0],v[0],v[3]],e:"suggest 後面接動名詞 V-ing，不接不定詞。"},
+{c:"動名詞/不定詞",s:"$S let me ___ his $A yesterday.",S:"M3",A:["bike","laptop","camera","car"],V:["use","take","ride"],
+ opt:v=>[v[0],"to "+v[0],v[2],v[3]],e:"let + 受詞 + 原形動詞（不加 to）。"},
+{c:"動名詞/不定詞",s:"$S is thinking of ___ a new $A.",S:"S3",A:["job","course","car","flat"],V:["find","buy","start"],
+ opt:v=>[v[2],"to "+v[0],v[0],v[3]],e:"think of 的 of 是介系詞，後面接 V-ing。"},
+{c:"動名詞/不定詞",s:"$S can't stand ___ in a $A.",S:"S3",A:["queue","traffic jam","crowd"],V:["wait","stand","sit"],
+ opt:v=>[v[2],"to "+v[0],v[0],v[3]],e:"can't stand 後面接動名詞 V-ing。"},
+{c:"動名詞/不定詞",s:"It's important ___ the $A before you sign it.",A:["contract","form","letter","document"],V:["read","check"],
+ opt:v=>["to "+v[0],v[2],v[0],v[3]],e:"It's + 形容詞 + to + 原形動詞 是固定句型。"},
+
+/* ---- 比較/程度（補充） ---- */
+{c:"比較/程度",s:"The $A is ___ than the $B.",A:["train","bus","plane","coach"],B:["car","boat","taxi"],
+ W:["more comfortable","comfortabler","most comfortable","comfortable"],e:"長形容詞的比較級用 more + 形容詞。"},
+{c:"比較/程度",s:"$S isn't ___ as her brother.",S:"F3",
+ W:["as tall","so taller","as taller","more tall"],e:"as + 原級形容詞 + as，表示同等比較。"},
+{c:"比較/程度",s:"The ___ you start, the ___ you'll finish.",
+ W:["earlier / sooner","early / soon","earliest / soonest","more early / more soon"],e:"the + 比較級, the + 比較級 = 越…就越…。"},
+{c:"比較/程度",s:"This is by far ___ $A in the city.",A:["best restaurant","tallest building","oldest church","biggest park"],
+ W:["the","a","an","(不填)"],e:"最高級前面一定要加 the。"},
+{c:"比較/程度",s:"He speaks English ___ than his $A.",A:["sister","brother","classmate","friend"],
+ W:["more fluently","fluently","most fluently","fluenter"],e:"副詞的比較級：more + 副詞 + than。"},
+
+/* ---- 片語動詞/介系詞（補充） ---- */
+{c:"片語動詞/介系詞",s:"$S has to get ___ at six every $A.",S:"S3",A:["morning","day","weekday"],
+ W:["up","on","off","in"],e:"get up = 起床。"},
+{c:"片語動詞/介系詞",s:"We should set ___ early to avoid the $A.",A:["traffic","rain","crowds","rush hour"],
+ W:["off","up","in","down"],e:"set off = 出發、動身。"},
+{c:"片語動詞/介系詞",s:"$S is really keen ___ $A.",S:"S3",A:["photography","cycling","cooking","music"],
+ W:["on","in","at","for"],e:"be keen on = 熱衷於，是固定搭配。"},
+{c:"片語動詞/介系詞",s:"Don't forget to fill ___ the $A before Friday.",A:["form","application","questionnaire"],
+ W:["in","up","on","over"],e:"fill in / fill out a form = 填表格。"},
+{c:"片語動詞/介系詞",s:"$S is worried ___ the $A next week.",S:"S3",A:["exam","interview","test","result"],
+ W:["about","of","for","on"],e:"be worried about 是固定搭配。"},
+{c:"片語動詞/介系詞",s:"The meeting was put ___ until $A.",A:["Monday","next week","the following day"],
+ W:["off","on","up","out"],e:"put off = 延期。"},
+{c:"片語動詞/介系詞",s:"$S grew ___ in a small $A near the sea.",S:"M3",A:["village","town","fishing port"],
+ W:["up","on","out","over"],e:"grow up = 長大、成長。"},
+{c:"片語動詞/介系詞",s:"I'm not very good ___ $A, but I'm improving.",A:["cooking","swimming","drawing","chess"],
+ W:["at","in","on","with"],e:"be good at + 名詞 / V-ing。"},
+
+/* ---- 數量詞/冠詞（補充） ---- */
+{c:"數量詞/冠詞",s:"Is there ___ $A in the $B?",A:["milk","bread","sugar","water"],B:["fridge","cupboard","kitchen"],
+ W:["any","some","many","a"],e:"疑問句和否定句中，不可數名詞前用 any。"},
+{c:"數量詞/冠詞",s:"There are only ___ $A left, so hurry.",A:["tickets","seats","copies","places"],
+ W:["a few","a little","much","less"],e:"可數複數名詞用 a few；不可數才用 a little。"},
+{c:"數量詞/冠詞",s:"$S goes to ___ school by $A.",S:"S3",A:["bus","bike","train","car"],
+ W:["(不填)","the","a","an"],e:"go to school / by bus 這類慣用語不加冠詞。"},
+{c:"數量詞/冠詞",s:"$S bought ___ umbrella and ___ pair of gloves.",S:"S3",
+ W:["an / a","a / an","the / a","a / the"],e:"umbrella 母音開頭用 an；pair 子音開頭用 a。"},
+{c:"數量詞/冠詞",s:"We don't have ___ time, so let's take a $A.",A:["taxi","bus","shortcut"],
+ W:["much","many","a few","few of"],e:"time 是不可數名詞，否定句用 much。"},
+{c:"數量詞/冠詞",s:"___ student in the class has a $A.",A:["laptop","dictionary","notebook","tablet"],
+ W:["Every","All","Most","Both"],e:"Every + 單數名詞 + 單數動詞。"},
+
+/* ---- 用字/搭配（補充） ---- */
+{c:"用字/搭配",s:"$S ___ a mistake in the $A.",S:"S3",A:["exam","report","email","calculation"],
+ W:["made","did","took","gave"],e:"make a mistake 是固定動詞搭配。"},
+{c:"用字/搭配",s:"$S is ___ in learning $A.",S:"S3",A:["Japanese","Spanish","German","Korean"],
+ W:["interested","interesting","interest","interestingly"],e:"人的感受用 -ed；interested in + V-ing。"},
+{c:"用字/搭配",s:"Please ___ attention to the $A.",A:["instructions","signs","details","warning"],
+ W:["pay","make","do","give"],e:"pay attention to 是固定搭配。"},
+{c:"用字/搭配",s:"The journey ___ about three $A.",A:["hours","days"],
+ W:["took","spent","passed","made"],e:"事情花掉多少時間用 take；人花錢/時間用 spend。"},
+{c:"用字/搭配",s:"$S was ___ tired to finish the $A.",S:"S3",A:["race","exam","work","report"],
+ W:["too","so","very much","enough"],e:"too + 形容詞 + to + 原形動詞。"},
+{c:"用字/搭配",s:"___ the rain, we still went to the $A.",A:["park","beach","match","market"],
+ W:["Despite","Although","However","Because"],e:"Despite / In spite of 後面接名詞；Although 後面接句子。"},
+{c:"用字/搭配",s:"$S studied hard, ___ she failed the $A.",S:"F3",A:["exam","test","course"],
+ W:["but","so","because","although"],e:"前後語意相反用 but；注意 although 不能和 but 同時出現。"},
+{c:"用字/搭配",s:"$S ___ up early so that he wouldn't miss the $A.",S:"M3",A:["train","bus","flight","meeting"],
+ W:["got","took","made","stood"],e:"get up = 起床；so that 引導目的子句。"}
+];
+const ALL=TPL.concat(TPL2).concat(TPL3);
+const POOLS={
+ S3:["Tom","Anna","My brother","My sister","Mr Brown","Julia","My cousin","The teacher","Peter","My neighbour"],
+ M3:["Tom","Peter","Mr Brown","My brother","My cousin"],
+ SP:["My friends","The students","Tom and Anna","My parents","The children","My classmates"],
+ SI:["I","We","They","You"],
+ F3:["Anna","Julia","My sister","My cousin Kate"],
+ S3L:["Tom","Anna","Julia","Peter","my brother","my sister","my cousin","the teacher"],
+ M3L:["Tom","Peter","Mr Brown","my brother","my cousin"],
+ SPL:["my friends","the students","my parents","the children","my classmates"],
+ SL:["I","we","they"],
+ YOU:["you","they","we"]
+};
+const rnd=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+function buildBank(cap){
+ const out=[],seen=new Set();
+ ALL.forEach(t=>{
+  const P2=/^M3/.test(t.S)?"he":null;
+  const S=t.S?POOLS[t.S]:[""],A=t.A||[""],B=t.B||[""],C=t.C||[""],V=t.V||[null];
+  const combos=[];
+  S.forEach(s=>A.forEach(a=>B.forEach(b=>C.forEach(c=>V.forEach(v=>combos.push([s,a,b,c,v]))))));
+  rnd(combos).slice(0,cap).forEach(([s,a,b,c,v])=>{
+   const s2=P2||((s==="I")?"I":s.toLowerCase());
+   const q=t.s.replace(/\$S2/g,s2).replace(/\$S/g,s).replace(/\$A/g,a).replace(/\$B/g,b).replace(/\$C/g,c);
+   if(seen.has(q))return; seen.add(q);
+   const o=t.W?t.W.slice():t.opt(VB[v]);
+   if(new Set(o).size!==4)return;   /* 選項撞在一起就跳過（如 read/read） */
+   const idx=rnd([0,1,2,3]);
+   out.push({c:t.c,q:q,o:idx.map(i=>o[i]),a:idx.indexOf(0),e:t.e});
+  });
+ });
+ return out;
+}
+
+const BANK=buildBank(30).concat(HAND);
+
+
+/* ============ 機體繪製：硬邊賽璐璐上色 ============ */
+function cel(id,l,d,at){
+  /* 全機共用同一個光源方向（userSpaceOnUse），避免每個部件各自漸層變成斑馬紋 */
+  return '<linearGradient id="'+id+'" gradientUnits="userSpaceOnUse" x1="-96" y1="-312" x2="150" y2="30">'
+    +'<stop offset="0%" stop-color="'+l+'"/><stop offset="'+(at/2|0)+'%" stop-color="'+l+'"/>'
+    +'<stop offset="100%" stop-color="'+d+'"/></linearGradient>';
+}
+const MECH={
+ Blaze :{m:["#ffa457","#c2410c"],s:["#ffd08a","#b45309"],k:["#8a3412","#48190a"],t:"#ffd93c",g:"#ffe27a",head:"crest", wpn:"fist"},
+ Zephyr:{m:["#eef6ff","#7ba7dd"],s:["#c3dcf7","#4a7cb8"],k:["#25476f","#132a45"],t:"#22d3ee",g:"#7ff0ff",head:"vfin",  wpn:"rifle"},
+ Aegis :{m:["#9df0c8","#22a06a"],s:["#cdf7e4","#177a4d"],k:["#12492e","#06281a"],t:"#fbbf24",g:"#8ff2c4",head:"visor", wpn:"shield"},
+ Raiden:{m:["#cfbaff","#7c3aed"],s:["#eae2ff","#5b21b6"],k:["#3b0764","#210442"],t:"#fbbf24",g:"#fde047",head:"kabuto",wpn:"katana"},
+ Grunt :{m:["#e3ecf7","#7f93b0"],s:["#c2d1e4","#5a6d8a"],k:["#333f56","#1a2333"],t:"#94a8c4",g:"#ff4d6d",head:"vfin",  wpn:"rifle"}
+};
+function mechSVG(key,isEnemy){
+  const c=MECH[key], P="cel"+key;
+  const G='url(#'+P+'m)', S='url(#'+P+'s)', K='url(#'+P+'k)';
+  const OL=' stroke="#0d1119" stroke-width="4" stroke-linejoin="round"';
+  const O3=' stroke="#0d1119" stroke-width="3" stroke-linejoin="round"';
+  const core=isEnemy?"ecore":"pcore", trim=isEnemy?"etrim":"ptrim";
+  let o='<defs>'+cel(P+'m',c.m[0],c.m[1],54)+cel(P+'s',c.s[0],c.s[1],52)+cel(P+'k',c.k[0],c.k[1],56)+'</defs>';
+
+  /* 背包・推進器 */
+  o+='<path d="M-44 -208 L-98 -194 L-104 -136 L-50 -150Z" fill="'+K+'"'+OL+'/>'
+    +'<path d="M-98 -186 L-122 -180 L-126 -148 L-102 -144Z" fill="'+K+'"'+O3+'/>'
+    +'<rect class="'+core+'" x="-134" y="-176" width="15" height="26" rx="5" fill="'+c.g+'" opacity=".92"/>';
+  /* 後肢（暗面） */
+  o+='<path d="M-42 -112 L-50 -58 L-18 -56 L-14 -112Z" fill="'+K+'"'+OL+'/>'
+    +'<path d="M-50 -58 L-56 -16 L-24 -14 L-18 -56Z" fill="'+K+'"'+OL+'/>'
+    +'<path d="M-64 -22 L-20 -19 L-16 2 L-70 2Z" fill="'+K+'"'+OL+'/>'
+    +'<path d="M-58 -156 L-94 -148 L-100 -104 L-64 -100Z" fill="'+K+'"'+OL+'/>';
+  /* 前肢 */
+  o+='<path d="M8 -114 L4 -58 L38 -56 L44 -114Z" fill="'+G+'"'+OL+'/>'
+    +'<path d="M4 -58 L2 -16 L36 -14 L38 -56Z" fill="'+S+'"'+OL+'/>'
+    +'<path d="M-4 -22 L38 -19 L50 2 L-8 2Z" fill="'+K+'"'+OL+'/>'
+    +'<path class="'+trim+'" d="M2 -68 L38 -66 L36 -48 L0 -50Z" fill="'+c.t+'"'+O3+'/>';
+  /* 腰 */
+  o+='<path d="M-40 -150 L40 -150 L48 -118 L36 -102 L-36 -102 L-48 -118Z" fill="'+S+'"'+OL+'/>'
+    +'<path d="M-16 -116 L16 -116 L13 -82 L-13 -82Z" fill="'+G+'"'+O3+'/>';
+  /* 胸 */
+  o+='<path d="M-46 -216 L46 -216 L58 -168 L40 -144 L-40 -144 L-58 -168Z" fill="'+G+'"'+OL+'/>'
+    +'<path class="'+trim+'" d="M-32 -208 L0 -188 L32 -208 L32 -198 L0 -178 L-32 -198Z" fill="'+c.t+'"'+O3+'/>'
+    +'<path d="M-40 -192 L-17 -192 L-21 -154 L-42 -154Z" fill="'+K+'"'+O3+'/>'
+    +'<path d="M17 -192 L40 -192 L42 -154 L21 -154Z" fill="'+K+'"'+O3+'/>'
+    +'<circle class="'+core+'" cx="0" cy="-168" r="14" fill="'+c.g+'" filter="url(#gl)"/>'+'<circle cx="0" cy="-168" r="6.5" fill="#fff" opacity=".9"/>'
+    +'<path d="M-38 -150 L38 -150" stroke="rgba(0,0,0,.32)" stroke-width="2.2" fill="none"/>';
+  /* 肩 */
+  o+='<path d="M-48 -220 L-102 -206 L-110 -152 L-56 -144Z" fill="'+K+'"'+OL+'/>'
+    +'<path class="'+trim+'" d="M-102 -206 L-132 -224 L-110 -176Z" fill="'+c.t+'"'+O3+'/>'
+    +'<path d="M48 -220 L106 -208 L114 -150 L56 -142Z" fill="'+G+'"'+OL+'/>'
+    +'<path class="'+trim+'" d="M106 -208 L138 -228 L116 -176Z" fill="'+c.t+'"'+O3+'/>'
+    +'<path d="M56 -196 L108 -188" stroke="rgba(0,0,0,.3)" stroke-width="2.2" fill="none"/>';
+  /* 前臂 */
+  o+='<path d="M62 -152 L102 -144 L108 -100 L68 -96Z" fill="'+S+'"'+OL+'/>';
+  /* 頸・頭 */
+  o+='<path d="M-14 -220 L14 -220 L12 -210 L-12 -210Z" fill="'+K+'"'+O3+'/>'
+    +'<path d="M-24 -256 L24 -256 L30 -234 L22 -216 L-22 -216 L-30 -234Z" fill="'+S+'"'+OL+'/>'
+    +'<path d="M-20 -248 L20 -248 L16 -233 L-16 -233Z" fill="#0d1119"/>'
+    +'<path class="'+core+'" d="M-17 -246 L17 -246 L13 -236 L-13 -236Z" fill="'+c.g+'" filter="url(#gl)"/>'
+    +'<path d="M-10 -229 L10 -229 L8 -219 L-8 -219Z" fill="'+c.k[0]+'"'+O3+'/>';
+  /* 頭冠 */
+  if(c.head==="crest")
+    o+='<path d="M0 -256 L-22 -300 L0 -282 L22 -300Z" fill="#e11d48"'+O3+'/>'
+      +'<path class="'+trim+'" d="M-30 -234 L-58 -246 L-32 -222Z" fill="'+c.t+'"'+O3+'/>'
+      +'<path class="'+trim+'" d="M30 -234 L58 -246 L32 -222Z" fill="'+c.t+'"'+O3+'/>';
+  else if(c.head==="vfin")
+    o+='<path class="'+trim+'" d="M-7 -256 L-42 -292 L-17 -254Z" fill="'+c.t+'"'+O3+'/>'
+      +'<path class="'+trim+'" d="M7 -256 L42 -292 L17 -254Z" fill="'+c.t+'"'+O3+'/>'
+      +'<circle cx="0" cy="-259" r="6.5" fill="#e11d48"'+O3+'/>';
+  else if(c.head==="visor")
+    o+='<path class="'+trim+'" d="M-31 -253 q31 -19 62 0 l-5 13 q-26 -15 -52 0Z" fill="'+c.t+'"'+O3+'/>'
+      +'<rect x="-3.5" y="-296" width="7" height="36" fill="'+c.k[0]+'"/>'
+      +'<circle class="'+core+'" cx="0" cy="-300" r="7.5" fill="'+c.g+'" filter="url(#gl)"/>';
+  else
+    o+='<path class="'+trim+'" d="M-26 -246 C-58 -258 -78 -286 -80 -312 C-60 -290 -38 -274 -20 -264Z" fill="'+c.t+'"'+O3+'/>'
+      +'<path class="'+trim+'" d="M26 -246 C58 -258 78 -286 80 -312 C60 -290 38 -274 20 -264Z" fill="'+c.t+'"'+O3+'/>'
+      +'<path d="M0 -258 L-10 -234 L10 -234Z" fill="#e11d48"'+O3+'/>';
+  /* 武裝 */
+  if(c.wpn==="fist")
+    o+='<path d="M-94 -104 L-132 -100 L-136 -62 L-98 -58Z" fill="'+S+'"'+OL+'/>'
+      +'<path d="M102 -104 L142 -100 L146 -58 L106 -54Z" fill="'+G+'"'+OL+'/>'
+      +'<path class="'+trim+'" d="M104 -102 L144 -98 L145 -88 L105 -92Z" fill="'+c.t+'"'+O3+'/>'
+      +'<path d="M108 -78 L145 -75 M108 -66 L146 -63" stroke="rgba(0,0,0,.38)" stroke-width="2.5" fill="none"/>';
+  else if(c.wpn==="rifle")
+    o+='<path d="M98 -102 L120 -100 L122 -76 L100 -74Z" fill="'+K+'"'+O3+'/>'
+      +'<g'+O3+'><rect x="114" y="-118" width="108" height="20" rx="6" fill="#2b3444"/>'
+      +'<rect class="'+core+'" x="212" y="-114" width="34" height="12" rx="6" fill="'+c.g+'"/>'
+      +'<rect x="124" y="-98" width="19" height="27" rx="6" fill="#1b2230"/>'
+      +'<rect x="150" y="-132" width="32" height="15" rx="5" fill="#4a5768"/></g>';
+  else if(c.wpn==="shield")
+    o+='<path d="M94 -102 L116 -100 L118 -76 L96 -74Z" fill="'+K+'"'+O3+'/>'
+      +'<path class="'+trim+'" d="M106 -212 L184 -190 L190 -80 L110 -44 L98 -142Z" fill="'+c.t+'"'+OL+'/>'
+      +'<path d="M118 -196 L172 -178 L177 -90 L118 -62 L110 -140Z" fill="#fde9b0"/>'
+      +'<path d="M144 -172 L158 -124 L144 -80 L130 -124Z" fill="'+c.k[0]+'"/>';
+  else
+    o+='<g transform="rotate(-34 104 -96)">'
+      +'<path d="M86 -110 L112 -110 L112 -72 L86 -72Z" fill="'+c.k[0]+'"'+O3+'/>'
+      +'<path class="'+trim+'" d="M108 -116 L120 -116 L120 -66 L108 -66Z" fill="'+c.t+'"'+O3+'/>'
+      +'<path d="M120 -112 L258 -134 L264 -112 L122 -90Z" fill="url(#blade)" stroke="#a5f3fc" stroke-width="3" filter="url(#gl)"/></g>';
+  /* 輪廓光 */
+  o+='<g fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2.6" stroke-linecap="round">'
+    +'<path d="M-46 -216 L46 -216"/><path d="M48 -220 L106 -208"/><path d="M-48 -220 L-102 -206"/>'
+    +'<path d="M-24 -256 L24 -256"/><path d="M8 -114 L44 -114"/></g>';
+  return o;
+}
+
+/* ============ 機體 ============ */
+const PILOTS=[
+{k:"Blaze", n:"烈火", en:"BLAZE", type:"超級系", hp:155, atk:46, def:.14,
+ dodge:0, spd:.30, heal:0, cmb:.45, rage:true,
+ skill:"熱血：COMBO x3 以上時傷害 +30%",
+ short:"高 HP・高攻擊",
+ desc:"正統的超級系重裝機體。<b>HP 155 / ATK 46</b>，硬碰硬最強。沒有閃避能力，但只要連續答對三題以上就會進入熱血狀態，攻擊力再提升 30%。<b>適合有把握連續答對的人。</b>"},
+{k:"Zephyr", n:"疾風", en:"ZEPHYR", type:"真實系", hp:108, atk:38, def:.10,
+ dodge:.25, spd:.70, heal:0, cmb:.45, rage:false,
+ skill:"迴避 25%｜速度加成加倍",
+ short:"高機動・會閃避",
+ desc:"輕量高機動機體。<b>25% 機率完全閃避敵方攻擊</b>，而且「答得快」的傷害加成是別台的兩倍。HP 最低，靠速度和運氣取勝。<b>適合反應快、答題果斷的人。</b>"},
+{k:"Aegis", n:"聖盾", en:"AEGIS", type:"支援系", hp:135, atk:34, def:.24,
+ dodge:0, spd:.30, heal:7, cmb:.45, rage:false,
+ skill:"裝甲 24%｜答對回復 7 HP",
+ short:"最耐打・會回血",
+ desc:"重裝甲支援機。<b>減傷 24% 為全機體最高</b>，而且每答對一題回復 7 HP，非常難被打倒。攻擊力最低，戰鬥會拉長 —— 但也代表你會練到最多題。<b>適合剛開始練、還會錯很多的人。</b>"},
+{k:"Raiden", n:"雷神", en:"RAIDEN", type:"平衡系", hp:122, atk:42, def:.13,
+ dodge:.08, spd:.35, heal:0, cmb:.72, rage:false,
+ skill:"COMBO 倍率成長 1.6 倍",
+ short:"連擊特化・萬能",
+ desc:"武者型平衡機體，各項數值均衡。<b>COMBO 倍率的成長速度是別台的 1.6 倍</b>，連擊拉得越長越可怕（上限 x3）。另有 8% 迴避。<b>適合想穩穩打、又想追求高連擊的人。</b>"}
+];
+
+/* ============ 敵機 ============ */
+const ENEMIES=[
+{n:"量產機兵 ZAKO", art:"eGrunt", hp:200,def:5, atk:15, pal:["#dbe6f3","#8aa0bd","#3c4a63"], core:"#ff4d6d", sc:.80},
+{n:"時態機兵 MK-II", art:"eGrunt", hp:280,def:8, atk:19, pal:["#e0e7ff","#818cf8","#3730a3"], core:"#a5b4fc", sc:.86},
+{n:"被動語態獸",     art:"eBeast", hp:360,def:11,atk:23, pal:["#d1fae5","#4ade80","#15803d"], core:"#facc15", sc:1.00},
+{n:"條件句妖獸",     art:"eBeast", hp:440,def:13,atk:27, pal:["#ede9fe","#a78bfa","#5b21b6"], core:"#f0abfc", sc:1.08},
+{n:"片語動詞蟲群",   art:"eBeast", hp:520,def:15,atk:31, pal:["#ffedd5","#fb923c","#c2410c"], core:"#fde047", sc:1.14},
+{n:"最終魔神 GRAMMAROS", art:"eDemon", hp:760,def:20,atk:38, pal:["#f5d0fe","#c084fc","#581c87"], core:"#ff4d6d", sc:1.02, boss:true}
+];
+
+/* ============ 檢討建議 ============ */
+const TIPS={
+"時態":"先找句中的<b>時間標記</b>（yet / since / ago / last night / by the time / every day），時間標記決定時態，不要憑語感選。",
+"情態動詞":"分兩組記：<b>推測</b>用 must(一定) / can't(不可能) / might(可能)；<b>規定</b>用 have to(必須) / mustn't(禁止) / don't have to(不必)。mustn't 與 don't have to 最常混淆。",
+"條件句":"背三條公式：<b>If + 現在式 → will</b>／<b>If + 過去式 → would</b>／<b>If + had p.p. → would have</b>。先看 if 子句就能推出主句。",
+"被動語態":"被動 = <b>be + p.p.</b>，難的是 be 要隨時態變化：is / was / is being / will be / has been。先決定時態，再套 be。",
+"關係子句":"先問「<b>先行詞是什麼</b>」：人→who、物→which、地點→where、時間→when、所有格→whose。",
+"轉述句":"轉述時時態<b>往後退一格</b>（is→was、will→would、have→had），人稱和時間副詞也要跟著改（tomorrow→the next day）。",
+"動名詞/不定詞":"把動詞分兩類背：<b>enjoy / avoid / finish / mind / keep 接 V-ing</b>；<b>decide / want / hope / plan 接 to V</b>。look forward <b>to</b> 的 to 是介系詞，後面接 V-ing。",
+"比較/程度":"分清三個句型：<b>too + adj + to</b>(太…不能)、<b>adj + enough to</b>(夠…可以)、<b>so/such … that</b>(如此…以致於)。such 後面接名詞，so 後面接形容詞。",
+"片語動詞/介系詞":"片語動詞要<b>整組放進句子背</b>，不要拆開背單字。介系詞搭配（good at / interested in / depend on / apologise for）建議做成小卡，每天翻。",
+"數量詞/冠詞":"先判斷名詞<b>可數或不可數</b>：many / few 配可數，much / little 配不可數。play <b>the</b> piano、<b>an</b> hour 這類冠詞例外要另外背。",
+"用字/搭配":"<b>-ing 形容事物、-ed 形容人</b>（The film was boring. / I was bored.）。make a decision、do a favour 這類動詞搭配要整組記。"
+};
+
+/* ============ 音效 / BGM ============ */
+const NOTE={};
+["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"].forEach((n,i)=>{
+  for(let o=1;o<7;o++)NOTE[n+o]=440*Math.pow(2,(i-9+(o-4)*12)/12);
+});
+const SND={
+  ctx:null, master:null, musicG:null, sfxG:null, on:true, noise:null,
+  seqId:null, step:0, nextT:0, theme:"normal",
+  THEMES:{
+    normal:{t:.135,
+      lead:["A4","-","C5","-","E5","-","D5","C5","-","A4","-","G4","A4","-","-","-",
+            "F4","-","A4","-","C5","-","B4","A4","-","G4","-","E4","G4","-","-","-"],
+      bass:["A2","A2","-","A2","-","A2","G2","G2","-","G2","-","G2","F2","F2","E2","E2"]},
+    boss:{t:.108,
+      lead:["D4","-","D4","F4","-","E4","D4","-","A4","-","G4","F4","E4","-","D4","-",
+            "D4","-","F4","G4","-","A4","A#4","-","A4","-","G4","F4","D4","-","-","-"],
+      bass:["D2","D2","D2","D2","C2","C2","C2","C2","A#1","A#1","A#1","A#1","A1","A1","A1","A1"]}
+  },
+  init(){
+    if(this.ctx)return;
+    try{
+      this.ctx=new (window.AudioContext||window.webkitAudioContext)();
+      this.master=this.ctx.createGain(); this.master.gain.value=.9; this.master.connect(this.ctx.destination);
+      this.musicG=this.ctx.createGain(); this.musicG.gain.value=.42; this.musicG.connect(this.master);
+      this.sfxG=this.ctx.createGain();   this.sfxG.gain.value=.9;  this.sfxG.connect(this.master);
+      const len=this.ctx.sampleRate*.5, b=this.ctx.createBuffer(1,len,this.ctx.sampleRate), d=b.getChannelData(0);
+      for(let i=0;i<len;i++)d[i]=Math.random()*2-1;
+      this.noise=b;
+    }catch(e){}
+  },
+  tone(f,t,dur,type,v,dest){
+    if(!this.ctx||!this.on)return;
+    const o=this.ctx.createOscillator(),g=this.ctx.createGain();
+    o.type=type||"square"; o.frequency.setValueAtTime(f,t);
+    g.gain.setValueAtTime(.0001,t);
+    g.gain.exponentialRampToValueAtTime(Math.max(.001,v),t+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    o.connect(g); g.connect(dest||this.sfxG); o.start(t); o.stop(t+dur+.03);
+    return o;
+  },
+  sweep(f1,f2,dur,type,v){
+    if(!this.ctx||!this.on)return;
+    const t=this.ctx.currentTime,o=this.ctx.createOscillator(),g=this.ctx.createGain();
+    o.type=type||"sawtooth"; o.frequency.setValueAtTime(f1,t);
+    o.frequency.exponentialRampToValueAtTime(Math.max(20,f2),t+dur);
+    g.gain.setValueAtTime(v,t); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    o.connect(g); g.connect(this.sfxG); o.start(t); o.stop(t+dur+.03);
+  },
+  burst(dur,v,freq,q){
+    if(!this.ctx||!this.on||!this.noise)return;
+    const t=this.ctx.currentTime,s=this.ctx.createBufferSource(),f=this.ctx.createBiquadFilter(),g=this.ctx.createGain();
+    s.buffer=this.noise; f.type="bandpass"; f.frequency.value=freq||1200; f.Q.value=q||1;
+    g.gain.setValueAtTime(v,t); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    s.connect(f); f.connect(g); g.connect(this.sfxG); s.start(t); s.stop(t+dur+.03);
+  },
+  hat(t){
+    if(!this.ctx||!this.on||!this.noise)return;
+    const s=this.ctx.createBufferSource(),f=this.ctx.createBiquadFilter(),g=this.ctx.createGain();
+    s.buffer=this.noise; f.type="highpass"; f.frequency.value=7000;
+    g.gain.setValueAtTime(.05,t); g.gain.exponentialRampToValueAtTime(.0001,t+.05);
+    s.connect(f); f.connect(g); g.connect(this.musicG); s.start(t); s.stop(t+.08);
+  },
+  play(theme){
+    this.init(); if(!this.ctx)return;
+    if(this.ctx.state==="suspended")this.ctx.resume();
+    if(this.theme===theme&&this.seqId)return;
+    this.theme=theme; this.step=0; this.nextT=this.ctx.currentTime+.08;
+    clearInterval(this.seqId);
+    this.seqId=setInterval(()=>this.tick(),25);
+  },
+  tick(){
+    if(!this.ctx||!this.on)return;
+    const T=this.THEMES[this.theme];
+    while(this.nextT<this.ctx.currentTime+.15){
+      const t=this.nextT, s=this.step%32;
+      const L=T.lead[s], B=T.bass[s%16];
+      if(L&&L!=="-"){ this.tone(NOTE[L],t,T.t*1.9,"square",.055,this.musicG);
+                      this.tone(NOTE[L]*2,t,T.t*1.2,"triangle",.022,this.musicG); }
+      if(B&&B!=="-") this.tone(NOTE[B],t,T.t*1.0,"triangle",.10,this.musicG);
+      if(s%2===0)    this.hat(t);
+      this.step++; this.nextT+=T.t;
+    }
+  },
+  stop(){ clearInterval(this.seqId); this.seqId=null; this.theme=""; },
+  /* --- 音效 --- */
+  shoot(){ this.sweep(1400,220,.16,"square",.10); this.burst(.1,.09,2600,1.2); },
+  boom(){ this.sweep(320,45,.42,"sawtooth",.16); this.burst(.34,.20,600,.7); },
+  hurt(){ this.sweep(260,70,.34,"square",.14); this.burst(.2,.13,900,1); },
+  dodge(){ this.sweep(500,2200,.2,"sine",.09); },
+  heal(){ if(!this.ctx||!this.on)return; [660,880,1100].forEach((f,i)=>setTimeout(()=>this.tone(f,this.ctx.currentTime,.14,"sine",.07),i*70)); },
+  combo(n){ this.tone(NOTE["E5"]*Math.pow(2,Math.min(n-2,5)/12),this.ctx?this.ctx.currentTime:0,.14,"square",.09); },
+  tick2(){ this.tone(1800,this.ctx?this.ctx.currentTime:0,.04,"square",.05); },
+  levelup(){ if(!this.ctx||!this.on)return; ["C5","E5","G5","C6"].forEach((n,i)=>setTimeout(()=>this.tone(NOTE[n],this.ctx.currentTime,.2,"square",.09),i*95)); },
+  win(){ if(!this.ctx||!this.on)return; ["C5","E5","G5","C6","G5","C6"].forEach((n,i)=>setTimeout(()=>this.tone(NOTE[n],this.ctx.currentTime,.3,"square",.10),i*160)); },
+  lose(){ if(!this.ctx||!this.on)return; ["G4","F4","D#4","C4"].forEach((n,i)=>setTimeout(()=>this.tone(NOTE[n],this.ctx.currentTime,.45,"sawtooth",.10),i*230)); }
+};
+
+/* ============ 狀態 ============ */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+let P,E,stage,deck,cur,locked,timerId,timeLeft,TIME=13,stats,startTime,chosen=null,qStart;
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+
+
+/* 產生機體圖形 */
+(function(){
+  const host=document.getElementById("pmHost");
+  ["Blaze","Zephyr","Aegis","Raiden"].forEach(k=>{
+    const g=document.createElementNS("http://www.w3.org/2000/svg","g");
+    g.id="m"+k; g.setAttribute("class","pm"); g.style.display="none";
+    g.innerHTML=mechSVG(k,false); host.appendChild(g);
+  });
+  document.getElementById("eGrunt").innerHTML=mechSVG("Grunt",true);
+})();
+
+
+/* 依畫面比例重新排位，避免窄螢幕把機體切掉一半 */
+const SCENE={hx:262,ex:752,s:1};
+function fitScene(){
+  const r=$("#scene").getBoundingClientRect();
+  if(!r.width||!r.height)return;
+  const cover=Math.max(r.width/1000,r.height/560);
+  const visW=r.width/cover;                 /* 可見的 viewBox 寬度 */
+  const x0=(1000-visW)/2;
+  SCENE.hx=x0+visW*0.245;
+  SCENE.ex=x0+visW*0.755;
+  SCENE.s=Math.max(.68,Math.min(1,visW/1000));
+  $("#hero").setAttribute("transform","translate("+SCENE.hx.toFixed(1)+",452) scale("+(SCENE.s*.9).toFixed(3)+")");
+  if(typeof E!=="undefined"&&E)placeEnemy();
+}
+function placeEnemy(){
+  const d=ENEMIES[Math.min(stage,ENEMIES.length-1)];
+  $("#enemy").setAttribute("transform","translate("+SCENE.ex.toFixed(1)+",452) scale("+(SCENE.s*d.sc).toFixed(3)+")");
+}
+window.addEventListener("resize",fitScene);
+window.addEventListener("orientationchange",()=>setTimeout(fitScene,250));
+
+/* ---- 櫻花 ---- */
+(function petals(){
+  const sc=$("#scene");
+  for(let i=0;i<16;i++){
+    const p=document.createElement("div"); p.className="petal";
+    p.style.left=(Math.random()*110)+"%";
+    p.style.animationDuration=(7+Math.random()*8)+"s";
+    p.style.animationDelay=(-Math.random()*14)+"s";
+    p.style.transform="scale("+(.6+Math.random()*.8)+")";
+    p.style.opacity=.35+Math.random()*.45;
+    sc.appendChild(p);
+  }
+})();
+
+/* ---- 選角畫面 ---- */
+function buildPicks(){
+  const box=$("#picks"); box.innerHTML="";
+  PILOTS.forEach(p=>{
+    const src=$("#m"+p.k);
+    const card=document.createElement("div");
+    card.className="pick";
+    card.innerHTML='<svg viewBox="-200 -322 470 340"></svg>'
+      +'<div class="pn">'+p.n+' <span style="font-size:10px;opacity:.6">'+p.en+'</span></div>'
+      +'<div class="pt">'+p.type+'</div>'
+      +'<div class="ps">'+p.short+'<br>HP '+p.hp+'｜ATK '+p.atk+'</div>';
+    const clone=src.cloneNode(true);
+    clone.removeAttribute("id"); clone.style.display="";
+    card.querySelector("svg").appendChild(clone);
+    card.onclick=()=>{
+      chosen=p;
+      $$(".pick").forEach(c=>c.classList.remove("sel"));
+      card.classList.add("sel");
+      $("#pickInfo").innerHTML="<b>"+p.n+" "+p.en+"（"+p.type+"）</b>　"+p.desc
+        +"<br><b>特殊能力｜</b>"+p.skill;
+      $("#btnStart").disabled=false;
+      SND.init(); SND.tone(880,SND.ctx?SND.ctx.currentTime:0,.1,"square",.07);
+    };
+    box.appendChild(card);
+  });
+}
+
+/* ---- 開始 ---- */
+function start(){
+  P={...chosen, lv:1, hp:chosen.hp, max:chosen.hp, combo:0, best:0};
+  stage=0; deck=shuffle(BANK); cur=0;
+  stats={right:0,wrong:0,byCat:{},wrongList:[],timeSum:0,answered:0};
+  startTime=Date.now();
+  $$(".pm").forEach(g=>g.style.display="none");
+  $("#m"+P.k).style.display="";
+  $("#heroFloat").classList.add("hover");
+  $("#pName").textContent=P.n+" "+P.en;
+  $("#skillTag").textContent="◆ "+P.skill;
+  fitScene(); loadEnemy(); drawP();
+  $("#scTitle").classList.add("hide"); $("#scPick").classList.add("hide"); $("#scOver").classList.add("hide");
+  SND.play("normal");
+  nextQ();
+}
+
+function loadEnemy(){
+  const d=ENEMIES[stage];
+  E={...d,max:d.hp};
+  $("#eName").textContent=(d.boss?"⚠ FINAL ":"NO."+(stage+1)+" ")+d.n;
+  $("#stageTag").textContent=d.boss?"★ FINAL STAGE ★":"STAGE "+(stage+1)+" / 5";
+  $("#hudE").classList.toggle("boss",!!d.boss);
+  $("#eS0").setAttribute("stop-color",d.pal[0]);
+  $("#eS1").setAttribute("stop-color",d.pal[1]);
+  $("#eS2").setAttribute("stop-color",d.pal[2]);
+  $$(".ecore").forEach(el=>el.setAttribute("fill",d.core));
+  if(d.art==="eGrunt"){
+    const setG=(gid,l,dk)=>{const st=document.querySelectorAll("#"+gid+" stop");
+      if(st.length===4){st[0].setAttribute("stop-color",l);st[1].setAttribute("stop-color",l);
+        st[2].setAttribute("stop-color",dk);st[3].setAttribute("stop-color",dk);}};
+    setG("celGruntm",d.pal[0],d.pal[1]); setG("celGrunts",d.pal[0],d.pal[2]); setG("celGruntk",d.pal[1],d.pal[2]);
+    $$(".etrim").forEach(el=>el.setAttribute("fill",d.pal[1]));
+  }
+  $$(".em").forEach(g=>g.style.display="none");
+  $("#"+d.art).style.display="";
+  placeEnemy();
+  $("#enemyFloat").classList.add("hover");
+  $("#skyR").setAttribute("fill",d.boss?"url(#skyB)":"url(#sky)");
+  $("#clouds").setAttribute("opacity",d.boss?".25":".95");
+  $("#sunG").setAttribute("opacity",d.boss?".35":"1");
+  if(d.boss)SND.play("boss");
+  drawE();
+}
+function drawP(){
+  $("#pLv").textContent="LV "+P.lv;
+  $("#pHpN").textContent=Math.max(0,Math.round(P.hp))+"/"+P.max;
+  $("#pAtk").textContent=P.atk; $("#pDef").textContent=Math.round(P.def*100)+"%";
+  const r=Math.max(0,P.hp/P.max);
+  const b=$("#pHp"); b.style.width=r*100+"%";
+  b.className=r<.25?"low":(r<.55?"mid":"");
+}
+function drawE(){
+  $("#eHpN").textContent=Math.max(0,Math.round(E.hp))+"/"+E.max;
+  $("#eDef").textContent=E.def;
+  $("#eHp").style.width=Math.max(0,E.hp/E.max*100)+"%";
+}
+
+/* ---- 出題 ---- */
+function nextQ(){
+  if(cur>=deck.length){deck=shuffle(BANK);cur=0}
+  const Q=deck[cur++]; locked=false; qStart=Date.now();
+  $("#exp").classList.remove("show");
+  $("#qcat").textContent=Q.c;
+  $("#q").innerHTML=Q.q.replace(/___/g,"<b>______</b>");
+  const box=$("#opts"); box.innerHTML="";
+  Q.o.forEach((t,i)=>{
+    const b=document.createElement("button");
+    b.className="opt"; b.innerHTML='<span class="k">'+"ABCD"[i]+'</span><span>'+t+'</span>';
+    b.onclick=()=>answer(i,Q,b);
+    box.appendChild(b);
+  });
+  runTimer(Q);
+}
+function runTimer(Q){
+  clearInterval(timerId); timeLeft=TIME;
+  $("#timer").classList.remove("low"); $("#timer i").style.width="100%";
+  timerId=setInterval(()=>{
+    timeLeft-=.1;
+    $("#timer i").style.width=Math.max(0,timeLeft/TIME*100)+"%";
+    if(timeLeft<=4)$("#timer").classList.add("low");
+    if(timeLeft<=3.05&&timeLeft%1<.1&&timeLeft%1>=0)SND.tick2();
+    if(timeLeft<=0){clearInterval(timerId);answer(-1,Q,null)}
+  },100);
+}
+
+/* ---- 作答 ---- */
+function answer(i,Q,btn){
+  if(locked)return; locked=true; clearInterval(timerId);
+  const secs=(Date.now()-qStart)/1000;
+  stats.timeSum+=Math.min(secs,TIME); stats.answered++;
+  $$(".opt").forEach(b=>b.disabled=true);
+  $$(".opt")[Q.a].classList.add("right");
+  stats.byCat[Q.c]=stats.byCat[Q.c]||{r:0,w:0};
+
+  if(i===Q.a){
+    stats.right++; stats.byCat[Q.c].r++;
+    P.combo++; P.best=Math.max(P.best,P.combo);
+    const speed=1+Math.max(0,timeLeft/TIME)*P.spd;
+    const cm=Math.min(3,1+(P.combo-1)*P.cmb);
+    const rage=(P.rage&&P.combo>=3)?1.3:1;
+    const dmg=Math.max(6,Math.round(P.atk*cm*speed*rage)-E.def);
+    if(P.combo>=2){
+      $("#combo").textContent="COMBO x"+P.combo+(rage>1?"　熱血!":"");
+      $("#combo").classList.remove("go"); void $("#combo").offsetWidth; $("#combo").classList.add("go");
+      SND.combo(P.combo);
+    }
+    heroAttack(dmg);
+    let extra="";
+    if(P.heal&&P.hp<P.max){
+      const h=Math.min(P.heal,P.max-P.hp); P.hp+=h; drawP();
+      setTimeout(()=>{float("+"+h,"heal",22);SND.heal()},700);
+      extra="　<span style='color:#15803d'>回復 "+h+" HP</span>";
+    }
+    $("#exp").innerHTML="✅ <b>正解！</b> "+Q.e+"　<span style='opacity:.65'>造成 "+dmg+" 傷害</span>"+extra;
+  }else{
+    stats.wrong++; stats.byCat[Q.c].w++;
+    stats.wrongList.push({q:Q.q,ans:Q.o[Q.a],pick:(i<0?null:Q.o[i]),e:Q.e,c:Q.c});
+    P.combo=0;
+    if(btn)btn.classList.add("wrong");
+    const dodged=Math.random()<P.dodge;
+    const dmg=Math.max(4,Math.round(E.atk*(1-P.def)*(i<0?1.25:1)));
+    enemyAttack(dodged?0:dmg);
+    $("#exp").innerHTML=(i<0?"⏰ <b>時間到！</b> ":"❌ <b>答錯了。</b> ")
+      +"正解 <b>"+"ABCD"[Q.a]+". "+Q.o[Q.a]+"</b>　"+Q.e
+      +(dodged?"　<span style='color:#0284c7'>迴避成功，未受傷害</span>"
+              :"　<span style='opacity:.65'>受到 "+dmg+" 傷害</span>");
+  }
+  $("#exp").classList.add("show");
+  setTimeout(()=>{
+    if(P.hp<=0)return end(false);
+    if(E.hp<=0)return defeat();
+    nextQ();
+  },2100);
+}
+
+/* ---- 演出 ---- */
+const HITS=["ドンッ！","バキィ！","ズガァン！","ドガッ！","ゴォッ！"];
+const HURTS=["グハッ！","ガッ！","ドスッ！"];
+function fx(el,cls,ms){el.classList.add(cls);setTimeout(()=>el.classList.remove(cls),ms)}
+function onomat(txt,col){
+  const o=$("#onomat"); o.textContent=txt; o.style.color=col||"#fffaf0";
+  o.classList.remove("go"); void o.offsetWidth; o.classList.add("go");
+}
+function burst(xPct,col){
+  const d=document.createElement("div"); d.className="burst";
+  d.style.background=col; d.style.left=xPct+"%"; d.style.top="46%";
+  $("#scene").appendChild(d); setTimeout(()=>d.remove(),430);
+}
+function float(n,cls,xPct){
+  const d=document.createElement("div");
+  d.className="dmg"+(cls?" "+cls:""); d.textContent=n;
+  d.style.left=xPct+"%"; d.style.top="44%";
+  $("#scene").appendChild(d); setTimeout(()=>d.remove(),1080);
+}
+function heroAttack(d){
+  SND.shoot();
+  fx($("#speed"),"on",260); fx($("#heroLunge"),"lunge-r",450);
+  setTimeout(()=>{
+    E.hp-=d; drawE(); SND.boom();
+    fx($("#enemyBody"),"shake",380); fx($("#flash"),"on",110); fx($("#tone"),"on",240);
+    burst(74,"#ffd93c"); onomat(HITS[Math.random()*HITS.length|0],"#fffaf0");
+    float("-"+d,"",76);
+  },230);
+}
+function enemyAttack(d){
+  fx($("#speed"),"on",260); fx($("#enemyLunge"),"lunge-l",450);
+  setTimeout(()=>{
+    if(d<=0){ SND.dodge(); float("回避!","miss",24); onomat("かわした！","#7dd3fc"); return; }
+    P.hp-=d; drawP(); SND.hurt();
+    fx($("#heroBody"),"shake",380); fx($("#tone"),"on",240);
+    const f=$("#flash"); f.classList.add("red"); fx(f,"on",130);
+    setTimeout(()=>f.classList.remove("red"),260);
+    burst(24,"#ff4d6d"); onomat(HURTS[Math.random()*HURTS.length|0],"#ffd2da");
+    float("-"+d,"",22);
+  },230);
+}
+function defeat(){
+  stage++;
+  if(stage>=ENEMIES.length)return end(true);
+  SND.levelup();
+  P.lv++; P.max+=18; P.atk+=6; P.def=Math.min(.42,P.def+.03);
+  P.hp=Math.min(P.max,P.hp+Math.round(P.max*.45));
+  drawP();
+  onomat("撃破！","#ffd93c"); burst(74,"#ffd93c");
+  $("#q").innerHTML="💥 敵機擊破！　<b>LEVEL UP</b> → LV "+P.lv+"（HP 回復・ATK +6・裝甲 +3%）";
+  $("#opts").innerHTML=""; $("#exp").classList.remove("show");
+  setTimeout(()=>{loadEnemy();nextQ()},2000);
+}
+
+/* ============ 結算與檢討 ============ */
+function end(win){
+  clearInterval(timerId); SND.stop();
+  win?SND.win():SND.lose();
+  const total=stats.right+stats.wrong;
+  const acc=total?stats.right/total:0;
+  const avg=stats.answered?(stats.timeSum/stats.answered):0;
+  const mins=Math.max(1,Math.round((Date.now()-startTime)/60000));
+
+  let g,gc;
+  if(win&&acc>=.9){g="S";gc="#ffd93c"}
+  else if(win&&acc>=.8){g="A";gc="#4ade80"}
+  else if(win){g="B";gc="#60a5fa"}
+  else if(acc>=.6){g="C";gc="#c084fc"}
+  else {g="D";gc="#fb7185"}
+
+  $("#overJp").textContent=win?"ミッションコンプリート":"ミッション失敗";
+  $("#overTitle").innerHTML=win?'<span style="color:#ffd93c">MISSION COMPLETE</span>'
+                               :'<span style="color:#ff4d6d">MISSION FAILED</span>';
+  $("#grade").innerHTML='<span style="color:'+gc+'">'+g+'</span>';
+  $("#overSub").textContent=win?"你擊破了最終魔神 GRAMMAROS！下面是這一戰的完整檢討。"
+                               :"機體被擊墜。先看下面的弱點分析，補完再出擊一次。";
+
+  let h='<div class="sect">▍戰鬥紀錄</div>';
+  const rows=[
+    ["使用機體",P.n+" "+P.en+"（"+P.type+"）　LV "+P.lv],
+    ["答對 / 總題數",stats.right+" / "+total+"　正確率 "+Math.round(acc*100)+"%"],
+    ["最高連擊","COMBO x"+P.best],
+    ["平均作答時間",avg.toFixed(1)+" 秒 / 題"],
+    ["抵達關卡",win?"全破 6 / 6":(stage+1)+" / 6"],
+    ["總作戰時間","約 "+mins+" 分鐘"]
+  ];
+  rows.forEach(r=>h+='<div class="rowline"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>');
+
+  const cats=Object.entries(stats.byCat)
+    .map(([k,v])=>({k,r:v.r,w:v.w,n:v.r+v.w,p:v.r/(v.r+v.w)}))
+    .sort((a,b)=>a.p-b.p||b.n-a.n);
+
+  if(cats.length){
+    h+='<div class="sect">▍文法類別正確率</div>';
+    cats.forEach(c=>{
+      const col=c.p<.5?"#ff4d6d":c.p<.75?"#ffc93c":"#2ecc71";
+      h+='<div class="rowline"><span class="cname">'+c.k+'</span>'
+        +'<span class="cbar"><i style="width:'+(c.p*100)+'%;background:'+col+'"></i></span>'
+        +'<b class="cnum">'+c.r+'/'+c.n+'　'+Math.round(c.p*100)+'%</b></div>';
+    });
+  }
+
+  const weak=cats.filter(c=>c.p<.75&&c.n>=2).slice(0,4);
+  const strong=cats.filter(c=>c.p>=.85&&c.n>=2).map(c=>c.k);
+  h+='<div class="sect">▍檢討與加強建議</div>';
+  if(weak.length){
+    weak.forEach(c=>{
+      h+='<div class="advice"><b>⚠ '+c.k+'（'+Math.round(c.p*100)+'%）</b><br>'+(TIPS[c.k]||"")+'</div>';
+    });
+  }else{
+    h+='<div class="advice good"><b>✔ 沒有明顯弱點</b><br>各類別正確率都在 75% 以上，可以往 FCE (B2) 程度前進了。</div>';
+  }
+  if(strong.length)
+    h+='<div class="advice good"><b>✔ 已掌握</b><br>'+strong.join("、")+' —— 這些類別表現穩定，複習時可以先跳過。</div>';
+  if(avg>9)
+    h+='<div class="advice"><b>⏱ 作答偏慢（平均 '+avg.toFixed(1)+' 秒）</b><br>PET 閱讀有時間壓力。看到題目先找關鍵字（時間標記、介系詞、先行詞），不要整句翻譯成中文再判斷。</div>';
+  if(P.best<=2&&total>=8)
+    h+='<div class="advice"><b>🔗 連擊偏低（最高 x'+P.best+'）</b><br>錯誤很分散，代表是觀念不熟而不是粗心。建議照上面的弱點順序，一次只練一個類別。</div>';
+
+  if(stats.wrongList.length){
+    h+='<div class="sect">▍錯題清單（'+stats.wrongList.length+' 題）</div><div id="wrongList">';
+    stats.wrongList.forEach(w=>{
+      h+='<div class="wq"><span class="tag">'+w.c+'</span>'+w.q.replace(/___/g,"______")
+        +'<br>正解：<em>'+w.ans+'</em>'
+        +(w.pick?'　你選了：<s>'+w.pick+'</s>':'　<s>（超時未作答）</s>')
+        +'<br>'+w.e+'</div>';
+    });
+    h+='</div>';
+  }
+  $("#report").innerHTML=h;
+  $("#scOver").classList.remove("hide");
+}
+
+/* ============ 事件 ============ */
+$("#btnToPick").onclick=()=>{SND.init();if(SND.ctx&&SND.ctx.state==="suspended")SND.ctx.resume();
+  buildPicks();$("#scTitle").classList.add("hide");$("#scPick").classList.remove("hide")};
+$("#btnBackTitle").onclick=()=>{$("#scPick").classList.add("hide");$("#scTitle").classList.remove("hide")};
+$("#btnStart").onclick=()=>{if(chosen)start()};
+$("#btnAgain").onclick=()=>{if(chosen)start()};
+$("#btnChange").onclick=()=>{$("#scOver").classList.add("hide");buildPicks();$("#scPick").classList.remove("hide")};
+$("#btnSound").onclick=e=>{
+  SND.on=!SND.on;
+  e.target.textContent=SND.on?"🔊 BGM / SE：ON":"🔇 BGM / SE：OFF";
+  if(SND.on){const t=SND.theme||"normal";SND.theme="";SND.play(t)} else SND.stop();
+};
+document.addEventListener("keydown",e=>{
+  const m={a:0,b:1,c:2,d:3,"1":0,"2":1,"3":2,"4":3}[e.key.toLowerCase()];
+  if(m!==undefined&&!locked){const b=$$(".opt")[m];if(b&&!b.disabled)b.click()}
+  if(e.key==="Enter"){
+    if(!$("#scTitle").classList.contains("hide"))$("#btnToPick").click();
+    else if(!$("#scPick").classList.contains("hide")&&chosen)start();
+    else if(!$("#scOver").classList.contains("hide")&&chosen)start();
+  }
+});
+</script>
+</body>
+</html>
