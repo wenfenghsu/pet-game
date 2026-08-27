@@ -216,6 +216,24 @@ body{
 .btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 #000}
 .btn:disabled{opacity:.4;cursor:default;transform:none;box-shadow:5px 5px 0 #000}
 
+/* 換角色圖 */
+#artGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:10px;
+  width:100%;max-width:880px;margin-top:12px;max-height:44vh;overflow-y:auto;padding:2px}
+.artcell{background:var(--paper);border:3px solid #000;border-radius:11px;padding:7px;text-align:center}
+.artcell .thumb{height:74px;border-radius:7px;background:#e7e2d6;border:2px solid #000;
+  display:grid;place-items:center;overflow:hidden;margin-bottom:5px}
+.artcell .thumb img{max-width:100%;max-height:100%;object-fit:contain}
+.artcell .thumb span{font-size:11px;color:#8a8478;font-weight:700}
+.artcell .an{font-size:11.5px;font-weight:900;color:var(--ink);line-height:1.3}
+.artcell .ah{font-size:9.5px;color:#6b7280;margin:2px 0 5px}
+.artcell .ab{display:flex;gap:4px;justify-content:center}
+.mini{font-family:inherit;font-size:10.5px;font-weight:800;border:2px solid #000;border-radius:6px;
+  padding:3px 8px;cursor:pointer;background:var(--gold);color:var(--ink)}
+.mini.del{background:#fecaca}
+#artMsg{margin-top:9px;font-size:12.5px;font-weight:700;color:var(--gold);min-height:1.2em}
+#artOpts{display:flex;gap:16px;align-items:center;justify-content:center;margin-top:10px;
+  font-size:12.5px;color:#dce4f0;flex-wrap:wrap}
+#artOpts label{display:flex;gap:6px;align-items:center;cursor:pointer}
 /* 選角 */
 #picks{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;width:100%;max-width:900px;margin-top:14px}
 .pick{background:var(--paper);border:4px solid #000;border-radius:13px;padding:9px 8px 11px;
@@ -366,7 +384,10 @@ body{
         <path d="M1010 560 L1010 502 q-30 -32 -52 -6 q-18 -32 -44 4 q-24 -24 -44 8 l0 52Z"/>
       </g>
 
-      <!-- ===== 我方機體 ===== -->
+      <image id="bgImg" x="0" y="0" width="1000" height="560"
+             preserveAspectRatio="xMidYMid slice" style="display:none"/>
+
+      <!-- ===== 我方角色 ===== -->
       <g id="hero" transform="translate(262,452) scale(.9)">
         <ellipse cx="0" cy="6" rx="68" ry="14" fill="#12161f" opacity=".3"/>
         <g id="heroLunge"><g id="heroFloat"><g id="heroBody"><g id="pmHost"></g></g></g></g>
@@ -475,26 +496,47 @@ body{
     <div class="jp">ロボット大戦 · 英文特訓</div>
     <h1>PET 英文特訓<br><em>ROBOT WARS</em></h1>
     <p style="margin-top:14px">
-      答對 → 機體開火攻擊｜答錯或超時 → 遭到反擊<br>
+      答對 → 忍者出招攻擊｜答錯或超時 → 遭到反擊<br>
       連續答對累積 <b style="color:#ffc93c">COMBO</b>，傷害倍增；答得越快傷害越高<br>
-      擊破 5 台敵機後，迎戰最終魔神<br>
+      擊敗 5 名敵忍後，迎戰最終魔神<br>
       <b style="color:#8fd14f">2,300+ 題劍橋 PET (B1) 文法</b>：時態、語態、關係子句、條件句、片語動詞…
     </p>
     <p style="font-size:12px;opacity:.6;margin-top:10px">鍵盤 A / B / C / D 或 1～4 作答</p>
-    <button class="btn" id="btnToPick">▶ 出擊</button>
+    <div class="row2">
+      <button class="btn" id="btnToPick">▶ 出擊</button>
+      <button class="btn ghost" id="btnArt">🖼 換角色圖</button>
+    </div>
   </div>
 
   <!-- ===== 選擇機體 ===== -->
   <div class="screen hide" id="scPick">
-    <div class="jp">機体選択 · SELECT YOUR UNIT</div>
-    <h2 style="color:#ffc93c">選擇你的機體</h2>
+    <div class="jp">忍者選択 · SELECT YOUR NINJA</div>
+    <h2 style="color:#ffc93c">選擇你的忍者</h2>
     <div id="picks"></div>
-    <div id="pickInfo">請選擇一台機體 —— 不同機體的數值與特殊能力會改變戰鬥策略。</div>
+    <div id="pickInfo">請選擇一名忍者 —— 不同忍者的數值與特殊能力會改變戰鬥策略。</div>
     <div id="diffs"></div>
     <div class="row2">
       <button class="btn ghost" id="btnBackTitle">← 返回</button>
       <button class="btn" id="btnStart" disabled>▶ 開始特訓</button>
     </div>
+  </div>
+
+  <!-- ===== 換角色圖 ===== -->
+  <div class="screen hide" id="scArt">
+    <div class="jp">キャラ差し替え · CUSTOM ART</div>
+    <h2 style="color:#ffc93c">換角色圖</h2>
+    <p style="max-width:660px">
+      把你自己的圖換進遊戲。去背 PNG 效果最好，人物要站在圖片底部。<br>
+      <b style="color:#ffc93c">這裡上傳的圖只存在這台裝置的瀏覽器</b> ——
+      若要讓全班都看到，請改把圖片放進網站的 <code>art/</code> 資料夾（檔名見下方說明）。
+    </p>
+    <div id="artGrid"></div>
+    <div id="artOpts">
+      <label><input type="checkbox" id="artFlip"> 敵方圖片左右翻轉（讓角色面向左邊）</label>
+      <button class="mini del" id="artClear">全部清除</button>
+    </div>
+    <div id="artMsg"></div>
+    <button class="btn" id="btnArtBack">← 返回</button>
   </div>
 
   <!-- ===== 中場檢討（進 BOSS 前） ===== -->
@@ -515,7 +557,7 @@ body{
     <div id="report"></div>
     <div class="row2">
       <button class="btn" id="btnAgain">↻ 再挑戰</button>
-      <button class="btn ghost" id="btnChange">機體變更</button>
+      <button class="btn ghost" id="btnChange">更換忍者</button>
     </div>
   </div>
 </div>
@@ -1192,6 +1234,126 @@ function buildBank(cap){
 const BANK=buildBank(30).concat(HAND);
 
 
+/* ============ Q 版忍者繪製：頭大身小、賽璐璐硬邊上色 ============ */
+const NINJA={
+ Blaze :{c:["#f26b4e","#a92a1c"], d:["#c23c26","#7a1a10"], obi:"#ffd93c", sk:["#ffe0c4","#e8b189"],
+         hair:"#7a2f18", acc:"#ffd93c", head:"bang",  wpn:"shuriken", face:"grin"},
+ Zephyr:{c:["#5f9ce8","#204a94"], d:["#3a70bd","#16336b"], obi:"#e2f3ff", sk:["#ffe0c4","#e8b189"],
+         hair:"#1f3f6b", acc:"#7ff0ff", head:"ahoge", wpn:"kunai",    face:"cool"},
+ Aegis :{c:["#57bd76","#1d6b3a"], d:["#38955a","#124a27"], obi:"#ffd93c", sk:["#ffe0c4","#e8b189"],
+         hair:"#3c2a18", acc:"#c98a3c", head:"round", wpn:"shield",   face:"smile"},
+ Raiden:{c:["#9a6ce8","#4a2394"], d:["#7346c4","#33176b"], obi:"#fde047", sk:["#ffe0c4","#e8b189"],
+         hair:"#241640", acc:"#fde047", head:"mage",  wpn:"blade",    face:"smirk"},
+ Grunt :{c:["#5a6272","#23262e"], d:["#3e444f","#14161b"], obi:"#8b1d1d", sk:["#5a6272","#3e444f"],
+         hair:"#14161b", acc:"#ff4d6d", head:"none",  wpn:"kunai",    face:"evil"}
+};
+function ninjaSVG(key,isEnemy){
+  const n=NINJA[key], P="nj"+key;
+  const OL=' stroke="#1a1520" stroke-width="4.5" stroke-linejoin="round"';
+  const O3=' stroke="#1a1520" stroke-width="3.2" stroke-linejoin="round"';
+  const core=isEnemy?"ecore":"pcore", trim=isEnemy?"etrim":"ptrim";
+  const cel=(id,l,d)=>'<linearGradient id="'+id+'" gradientUnits="userSpaceOnUse" x1="-70" y1="-250" x2="90" y2="20">'
+      +'<stop offset="0%" stop-color="'+l+'"/><stop offset="30%" stop-color="'+l+'"/>'
+      +'<stop offset="100%" stop-color="'+d+'"/></linearGradient>';
+  const C='url(#'+P+'c)', D='url(#'+P+'d)', S='url(#'+P+'s)';
+  let o='<defs>'+cel(P+'c',n.c[0],n.c[1])+cel(P+'d',n.d[0],n.d[1])+cel(P+'s',n.sk[0],n.sk[1])+'</defs>';
+
+  /* ---- 後手臂（袖子）---- */
+  o+='<g fill="none" stroke-linecap="round">'
+    +'<path d="M-28 -128 C-52 -116 -60 -96 -56 -78" stroke="#1a1520" stroke-width="25"/>'
+    +'<path d="M-28 -128 C-52 -116 -60 -96 -56 -78" stroke="'+D+'" stroke-width="18"/></g>'
+    +'<circle cx="-57" cy="-74" r="10" fill="'+S+'"'+O3+'/>';
+  /* ---- 腿 + 足袋 ---- */
+  o+='<path d="M-26 -84 L-31 -34 L-8 -34 L-5 -84Z" fill="'+D+'"'+OL+'/>'
+    +'<path d="M6 -84 L9 -34 L32 -34 L28 -84Z" fill="'+C+'"'+OL+'/>'
+    +'<path d="M-38 -36 L-6 -36 L-3 -12 L-44 -12Z" fill="#2a2633"'+OL+'/>'
+    +'<path d="M6 -36 L36 -36 L44 -12 L3 -12Z" fill="#3a3545"'+OL+'/>'
+    +'<path d="M-44 -12 L-3 -12 L-2 -2 L-46 -2Z" fill="#1a1520"'+O3+'/>'
+    +'<path d="M3 -12 L44 -12 L46 -2 L2 -2Z" fill="#1a1520"'+O3+'/>';
+  /* ---- 身體（忍者服）---- */
+  o+='<path d="M-34 -142 C-16 -152 16 -152 34 -142 L40 -86 C12 -74 -14 -74 -40 -86Z" fill="'+C+'"'+OL+'/>'
+    +'<path d="M-2 -150 L6 -150 L10 -84 L0 -84Z" fill="'+D+'" opacity=".55"/>'
+    +'<path d="M-40 -104 L40 -104 L41 -88 L-41 -88Z" fill="'+n.obi+'"'+O3+'/>'
+    +'<path d="M28 -102 L52 -110 L56 -88 L34 -84Z" fill="'+n.obi+'"'+O3+'/>';
+  /* ---- 前手臂 ---- */
+  o+='<g fill="none" stroke-linecap="round">'
+    +'<path d="M30 -134 C54 -128 66 -114 68 -98" stroke="#1a1520" stroke-width="25"/>'
+    +'<path d="M30 -134 C54 -128 66 -114 68 -98" stroke="'+C+'" stroke-width="18"/></g>'
+    +'<circle cx="70" cy="-95" r="11" fill="'+S+'"'+O3+'/>';
+  /* ---- 武器 ---- */
+  if(n.wpn==="shuriken")
+    o+='<g transform="translate(92,-118) rotate(18)"><path class="'+trim+'" d="M0 -30 L9 -9 L30 0 L9 9 L0 30 L-9 9 L-30 0 L-9 -9Z" fill="#cfd8e6"'+O3+'/>'
+      +'<circle cx="0" cy="0" r="5" fill="#1a1520"/></g>';
+  else if(n.wpn==="kunai")
+    o+='<g transform="translate(86,-104) rotate(-28)"><path d="M0 -46 L9 -20 L0 34 L-9 -20Z" fill="#cfd8e6"'+O3+'/>'
+      +'<rect x="-6" y="30" width="12" height="20" rx="4" fill="#2a2633"'+O3+'/>'
+      +'<circle class="'+core+'" cx="0" cy="54" r="7" fill="none" stroke="'+n.acc+'" stroke-width="4"/></g>';
+  else if(n.wpn==="shield")
+    o+='<path d="M74 -150 L128 -134 L132 -68 L78 -44 L68 -104Z" fill="'+n.acc+'"'+OL+'/>'
+      +'<path d="M82 -138 L120 -126 L123 -74 L84 -56 L76 -102Z" fill="#e8c98a"/>'
+      +'<path d="M100 -122 L110 -92 L100 -66 L90 -92Z" fill="#7a4f1e"/>';
+  else
+    o+='<g transform="translate(78,-112) rotate(-38)"><path d="M0 -12 L112 -12 L124 0 L112 12 L0 12Z" fill="#dfe7f2"'+O3+'/>'
+      +'<rect x="-34" y="-11" width="34" height="22" rx="5" fill="#2a2633"'+O3+'/>'
+      +'<rect x="-2" y="-16" width="8" height="32" rx="3" fill="'+n.acc+'"'+O3+'/></g>';
+  /* ---- 頭巾（整顆頭）---- */
+  o+='<path d="M-56 -216 q-30 -14 -46 6 q20 0 30 12 q12 14 26 10Z" fill="'+D+'"'+O3+'/>'
+    +'<ellipse cx="0" cy="-196" rx="58" ry="60" fill="'+C+'"'+OL+'/>';
+  /* ---- 露出的臉 ---- */
+  o+='<ellipse cx="4" cy="-190" rx="42" ry="42" fill="'+S+'"'+O3+'/>';
+  /* ---- 下巴布 ---- */
+  o+='<path d="M-40 -164 q44 30 88 0 q-6 30 -44 30 q-38 0 -44 -30Z" fill="'+C+'"'+O3+'/>';
+  /* ---- 頭部特徵 ---- */
+  if(n.head==="bang")
+    o+='<path d="M-30 -224 q14 -16 30 -6 q14 -12 28 2 q-14 -4 -24 6 q-12 -10 -34 -2Z" fill="'+n.hair+'"'+O3+'/>'
+      +'<path d="M-22 -228 L-14 -244 L-4 -230Z" fill="'+n.hair+'"'+O3+'/>';
+  else if(n.head==="ahoge")
+    o+='<path d="M2 -252 C10 -276 34 -280 42 -266 C30 -266 18 -258 12 -246Z" fill="'+n.hair+'"'+O3+'/>'
+      +'<path d="M-34 -222 q18 -12 34 -4 q-16 0 -28 8Z" fill="'+n.hair+'"'+O3+'/>';
+  else if(n.head==="round")
+    o+='<path d="M-32 -220 q34 -18 68 -2 q-16 -8 -34 -6 q-20 2 -34 8Z" fill="'+n.hair+'"'+O3+'/>';
+  else if(n.head==="mage")
+    o+='<path d="M-8 -252 q14 -12 28 0 q10 10 -2 16 q-16 6 -28 -4 q-8 -6 2 -12Z" fill="'+n.hair+'"'+O3+'/>'
+      +'<rect x="-4" y="-244" width="22" height="8" rx="4" fill="'+n.acc+'"/>';
+  /* ---- 額當（護額）---- */
+  o+='<path d="M-46 -214 q48 -22 94 -2 l3 15 q-48 -20 -94 2Z" fill="#2a2633"'+O3+'/>'
+    +'<circle class="'+trim+'" cx="4" cy="-212" r="9" fill="'+n.acc+'"'+O3+'/>';
+  /* ---- 五官 ---- */
+  const eye=(x,y,r,ir)=>'<ellipse cx="'+x+'" cy="'+y+'" rx="'+r+'" ry="'+(r*1.22)+'" fill="#fff" stroke="#1a1520" stroke-width="3"/>'
+    +'<ellipse cx="'+(x+1)+'" cy="'+(y+2)+'" rx="'+(r*.62)+'" ry="'+(r*.8)+'" fill="'+ir+'"/>'
+    +'<ellipse cx="'+(x+1)+'" cy="'+(y+3)+'" rx="'+(r*.32)+'" ry="'+(r*.44)+'" fill="#1a1520"/>'
+    +'<circle cx="'+(x-r*.34)+'" cy="'+(y-r*.44)+'" r="'+(r*.3)+'" fill="#fff"/>';
+  const ir=isEnemy?"#ff4d6d":"#3b2a1e";
+  if(n.face==="evil"){
+    o+='<path d="M-22 -198 L-2 -190 L-4 -181 L-22 -188Z" fill="#ff4d6d"/>'
+      +'<path d="M30 -198 L10 -190 L12 -181 L30 -188Z" fill="#ff4d6d"/>';
+  }else{
+    o+=eye(-16,-190,13,ir)+eye(26,-190,14,ir);
+  }
+  /* 眉 */
+  if(n.face==="cool"||n.face==="smirk")
+    o+='<path d="M-28 -208 q12 -5 22 -1 M14 -209 q12 -4 24 1" fill="none" stroke="#1a1520" stroke-width="3.4" stroke-linecap="round"/>';
+  /* 嘴 */
+  if(n.face==="grin")
+    o+='<path d="M-10 -166 q16 22 34 0 q-4 20 -17 20 q-13 0 -17 -20Z" fill="#8f2340"'+O3+'/>'
+      +'<path d="M-7 -164 q14 6 28 0 l-2 -3 q-12 4 -24 0Z" fill="#fff"/>';
+  else if(n.face==="smile")
+    o+='<path d="M-4 -164 q14 16 26 0" fill="none" stroke="#1a1520" stroke-width="3.6" stroke-linecap="round"/>';
+  else if(n.face==="evil")
+    o+='<path d="M-18 -170 L28 -170 L26 -162 L-16 -162Z" fill="#1a1520"/>'
+      +'<path d="M-12 -170 L-8 -163 L-3 -170 L2 -163 L7 -170 L12 -163 L17 -170Z" fill="#fff"/>';
+  else
+    o+='<path d="M2 -166 q12 10 22 -2" fill="none" stroke="#1a1520" stroke-width="3.6" stroke-linecap="round"/>';
+  /* 腮紅 */
+  if(!isEnemy)
+    o+='<ellipse cx="-22" cy="-172" rx="10" ry="5.5" fill="#f87171" opacity=".38"/>'
+      +'<ellipse cx="34" cy="-172" rx="10" ry="5.5" fill="#f87171" opacity=".38"/>';
+  /* 輪廓光 */
+  o+='<g fill="none" stroke="rgba(255,255,255,.42)" stroke-width="3" stroke-linecap="round">'
+    +'<path d="M-44 -232 q30 -20 62 -12"/><path d="M-30 -146 q30 -10 58 -2"/></g>';
+  return o;
+}
+
 /* ============ 機體繪製：硬邊賽璐璐上色 ============ */
 function cel(id,l,d,at){
   /* 全機共用同一個光源方向（userSpaceOnUse），避免每個部件各自漸層變成斑馬紋 */
@@ -1300,40 +1462,40 @@ function mechSVG(key,isEnemy){
 
 /* ============ 機體 ============ */
 const PILOTS=[
-{k:"Blaze", n:"烈火", en:"BLAZE", type:"超級系", hp:155, atk:46, def:.14,
+{k:"Blaze", n:"烈火", en:"BLAZE", type:"火遁型", hp:155, atk:46, def:.14,
  dodge:0, spd:.30, heal:0, cmb:.45, rage:true,
  skill:"熱血：COMBO x3 以上時傷害 +30%",
  short:"高 HP・高攻擊",
- desc:"正統的超級系重裝機體。<b>HP 155 / ATK 46</b>，硬碰硬最強。沒有閃避能力，但只要連續答對三題以上就會進入熱血狀態，攻擊力再提升 30%。<b>適合有把握連續答對的人。</b>"},
-{k:"Zephyr", n:"疾風", en:"ZEPHYR", type:"真實系", hp:108, atk:38, def:.10,
+ desc:"正面硬拚型的忍者。<b>HP 155 / ATK 46</b>，硬碰硬最強。沒有閃避能力，但只要連續答對三題以上就會進入熱血狀態，攻擊力再提升 30%。<b>適合有把握連續答對的人。</b>"},
+{k:"Zephyr", n:"疾風", en:"ZEPHYR", type:"風遁型", hp:108, atk:38, def:.10,
  dodge:.25, spd:.70, heal:0, cmb:.45, rage:false,
  skill:"迴避 25%｜速度加成加倍",
  short:"高機動・會閃避",
- desc:"輕量高機動機體。<b>25% 機率完全閃避敵方攻擊</b>，而且「答得快」的傷害加成是別台的兩倍。HP 最低，靠速度和運氣取勝。<b>適合反應快、答題果斷的人。</b>"},
-{k:"Aegis", n:"聖盾", en:"AEGIS", type:"支援系", hp:135, atk:34, def:.24,
+ desc:"身法極快的忍者。<b>25% 機率完全閃避敵方攻擊</b>，而且「答得快」的傷害加成是別台的兩倍。HP 最低，靠速度和運氣取勝。<b>適合反應快、答題果斷的人。</b>"},
+{k:"Aegis", n:"岩盾", en:"AEGIS", type:"土遁型", hp:135, atk:34, def:.24,
  dodge:0, spd:.30, heal:7, cmb:.45, rage:false,
  skill:"裝甲 24%｜答對回復 7 HP",
  short:"最耐打・會回血",
- desc:"重裝甲支援機。<b>減傷 24% 為全機體最高</b>，而且每答對一題回復 7 HP，非常難被打倒。攻擊力最低，戰鬥會拉長 —— 但也代表你會練到最多題。<b>適合剛開始練、還會錯很多的人。</b>"},
-{k:"Raiden", n:"雷神", en:"RAIDEN", type:"平衡系", hp:122, atk:42, def:.13,
+ desc:"以守代攻的忍者。<b>減傷 24% 為全忍者最高</b>，而且每答對一題回復 7 HP，非常難被打倒。攻擊力最低，戰鬥會拉長 —— 但也代表你會練到最多題。<b>適合剛開始練、還會錯很多的人。</b>"},
+{k:"Raiden", n:"雷神", en:"RAIDEN", type:"雷遁型", hp:122, atk:42, def:.13,
  dodge:.08, spd:.35, heal:0, cmb:.72, rage:false,
  skill:"COMBO 倍率成長 1.6 倍",
  short:"連擊特化・萬能",
- desc:"武者型平衡機體，各項數值均衡。<b>COMBO 倍率的成長速度是別台的 1.6 倍</b>，連擊拉得越長越可怕（上限 x3）。另有 8% 迴避。<b>適合想穩穩打、又想追求高連擊的人。</b>"}
+ desc:"各項數值均衡的萬能忍者。<b>COMBO 倍率的成長速度是別台的 1.6 倍</b>，連擊拉得越長越可怕（上限 x3）。另有 8% 迴避。<b>適合想穩穩打、又想追求高連擊的人。</b>"}
 ];
 
 /* ============ 難度 ============ */
 const DIFFS=[
- {k:"easy",  n:"簡單", d:"作答 18 秒｜敵人較弱", time:18, ehp:.80, eatk:.80},
+ {k:"easy",  n:"簡單", d:"作答 18 秒｜敵忍較弱", time:18, ehp:.80, eatk:.80},
  {k:"normal",n:"普通", d:"作答 13 秒｜標準難度", time:13, ehp:1,   eatk:1},
- {k:"hard",  n:"困難", d:"作答 10 秒｜敵人強化", time:10, ehp:1.15,eatk:1.30}
+ {k:"hard",  n:"困難", d:"作答 10 秒｜敵忍強化", time:10, ehp:1.15,eatk:1.30}
 ];
 let DIFF=DIFFS[1];
 
 /* ============ 敵機 ============ */
 const ENEMIES=[
-{n:"量產機兵 ZAKO", weak:"時態", art:"eGrunt", hp:360,def:5, atk:15, pal:["#dbe6f3","#8aa0bd","#3c4a63"], core:"#ff4d6d", sc:.80},
-{n:"時態機兵 MK-II", weak:"動名詞/不定詞", art:"eGrunt", hp:500,def:8, atk:19, pal:["#e0e7ff","#818cf8","#3730a3"], core:"#a5b4fc", sc:.86},
+{n:"下忍 ZAKO", weak:"時態", art:"eGrunt", hp:360,def:5, atk:15, pal:["#dbe6f3","#8aa0bd","#3c4a63"], core:"#ff4d6d", sc:.80},
+{n:"時態上忍", weak:"動名詞/不定詞", art:"eGrunt", hp:500,def:8, atk:19, pal:["#e0e7ff","#818cf8","#3730a3"], core:"#a5b4fc", sc:.86},
 {n:"被動語態獸", weak:"被動語態",     art:"eBeast", hp:650,def:11,atk:23, pal:["#d1fae5","#4ade80","#15803d"], core:"#facc15", sc:1.00},
 {n:"條件句妖獸", weak:"條件句",     art:"eBeast", hp:790,def:13,atk:27, pal:["#ede9fe","#a78bfa","#5b21b6"], core:"#f0abfc", sc:1.08},
 {n:"片語動詞蟲群", weak:"片語動詞/介系詞",   art:"eBeast", hp:940,def:15,atk:31, pal:["#ffedd5","#fb923c","#c2410c"], core:"#fde047", sc:1.14},
@@ -1463,13 +1625,24 @@ const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random(
 
 /* 產生機體圖形 */
 (function(){
+  const NS="http://www.w3.org/2000/svg";
   const host=document.getElementById("pmHost");
   ["Blaze","Zephyr","Aegis","Raiden"].forEach(k=>{
-    const g=document.createElementNS("http://www.w3.org/2000/svg","g");
+    const g=document.createElementNS(NS,"g");
     g.id="m"+k; g.setAttribute("class","pm"); g.style.display="none";
-    g.innerHTML=mechSVG(k,false); host.appendChild(g);
+    g.innerHTML=ninjaSVG(k,false); host.appendChild(g);
   });
-  document.getElementById("eGrunt").innerHTML=mechSVG("Grunt",true);
+  document.getElementById("eGrunt").innerHTML=ninjaSVG("Grunt",true);
+  /* 自訂圖片節點：有圖時取代畫出來的角色 */
+  const mk=(id,parent)=>{
+    const im=document.createElementNS(NS,"image");
+    im.id=id; im.setAttribute("x",-150); im.setAttribute("y",-300);
+    im.setAttribute("width",300); im.setAttribute("height",300);
+    im.setAttribute("preserveAspectRatio","xMidYMax meet");
+    im.style.display="none"; parent.appendChild(im);
+  };
+  mk("heroImg",document.getElementById("heroBody"));
+  mk("enemyImg",document.getElementById("enemyBody"));
 })();
 
 
@@ -1507,6 +1680,110 @@ window.addEventListener("orientationchange",()=>setTimeout(fitScene,250));
     sc.appendChild(p);
   }
 })();
+
+
+/* ============ 自訂角色圖：localStorage 上傳 + art/ 資料夾 ============ */
+const ART={
+  KEY:"petgame_art_v1", MAXPX:420, data:{}, flip:false, ready:false,
+  slots(){
+    const a=[{k:"bg",n:"戰鬥背景",hint:"建議 1000×560"}];
+    PILOTS.forEach(p=>a.push({k:"hero_"+p.k,n:"我方・"+p.n+" "+p.en,hint:"去背 PNG，人物站在底部"}));
+    ENEMIES.forEach((e,i)=>a.push({k:"enemy_"+i,n:"敵方・"+e.n,hint:"去背 PNG"}));
+    return a;
+  },
+  load(){ try{ this.data=JSON.parse(localStorage.getItem(this.KEY)||"{}")||{};
+                this.flip=localStorage.getItem(this.KEY+"_flip")==="1"; }catch(e){ this.data={} } },
+  save(){ try{ localStorage.setItem(this.KEY,JSON.stringify(this.data));
+               localStorage.setItem(this.KEY+"_flip",this.flip?"1":"0"); return true; }
+          catch(e){ return false } },
+  /* 從 art/ 資料夾自動載入（跟著網站一起發布時用） */
+  probe(){
+    const exts=["png","webp","jpg"];
+    const tries=this.slots().map(sl=>new Promise(res=>{
+      if(this.data[sl.k])return res();
+      let i=0;
+      const next=()=>{
+        if(i>=exts.length)return res();
+        const url="art/"+sl.k+"."+exts[i++];
+        const im=new Image();
+        im.onload=()=>{ this.data[sl.k]=url; res(); };
+        im.onerror=next; im.src=url;
+      };
+      next();
+    }));
+    return Promise.all(tries).then(()=>{this.ready=true});
+  },
+  /* 讀檔 → 縮圖 → 存 */
+  put(k,file){
+    return new Promise((res,rej)=>{
+      const fr=new FileReader();
+      fr.onload=()=>{
+        const im=new Image();
+        im.onload=()=>{
+          const sc=Math.min(1,this.MAXPX/Math.max(im.width,im.height));
+          const w=Math.max(1,Math.round(im.width*sc)), h=Math.max(1,Math.round(im.height*sc));
+          const c=document.createElement("canvas"); c.width=w; c.height=h;
+          c.getContext("2d").drawImage(im,0,0,w,h);
+          this.data[k]=c.toDataURL("image/png");
+          if(!this.save()){ delete this.data[k]; rej("瀏覽器儲存空間已滿，請先清掉幾張圖再試"); return; }
+          res();
+        };
+        im.onerror=()=>rej("這個檔案不是有效的圖片");
+        im.src=fr.result;
+      };
+      fr.onerror=()=>rej("讀取檔案失敗");
+      fr.readAsDataURL(file);
+    });
+  },
+  del(k){ delete this.data[k]; this.save(); },
+  clearAll(){ this.data={}; this.save(); },
+  /* 套用到畫面 */
+  applyHero(){
+    const src=this.data["hero_"+P.k], im=$("#heroImg");
+    if(src){ im.setAttribute("href",src); im.setAttribute("crossorigin","anonymous"); im.style.display="";
+             $$(".pm").forEach(g=>g.style.display="none"); }
+    else { im.style.display="none"; }
+  },
+  applyEnemy(){
+    const src=this.data["enemy_"+stage], im=$("#enemyImg");
+    if(src){ im.setAttribute("href",src); im.style.display="";
+             im.setAttribute("transform",this.flip?"scale(-1,1)":"");
+             $$(".em").forEach(g=>g.style.display="none"); }
+    else { im.style.display="none"; }
+  },
+  applyBg(){
+    const src=this.data["bg"], im=$("#bgImg");
+    if(!im)return;
+    if(src){ im.setAttribute("href",src); im.style.display=""; }
+    else { im.style.display="none"; }
+  }
+};
+
+/* ---- 換圖畫面 ---- */
+function buildArt(){
+  const box=$("#artGrid"); box.innerHTML="";
+  ART.slots().forEach(sl=>{
+    const cell=document.createElement("div"); cell.className="artcell";
+    const has=!!ART.data[sl.k];
+    cell.innerHTML='<div class="thumb">'+(has?'<img src="'+ART.data[sl.k]+'" alt="">':'<span>未設定</span>')+'</div>'
+      +'<div class="an">'+sl.n+'</div><div class="ah">'+sl.hint+'</div>'
+      +'<div class="ab"><button class="mini pick">選擇圖片</button>'
+      +(has?'<button class="mini del">清除</button>':'')+'</div>';
+    const inp=document.createElement("input");
+    inp.type="file"; inp.accept="image/*"; inp.style.display="none";
+    cell.appendChild(inp);
+    cell.querySelector(".pick").onclick=()=>inp.click();
+    inp.onchange=()=>{
+      const f=inp.files&&inp.files[0]; if(!f)return;
+      ART.put(sl.k,f).then(()=>{buildArt();$("#artMsg").textContent="已更新："+sl.n;})
+        .catch(err=>{$("#artMsg").textContent="⚠ "+err;});
+    };
+    const db=cell.querySelector(".del");
+    if(db)db.onclick=()=>{ART.del(sl.k);buildArt();$("#artMsg").textContent="已清除："+sl.n;};
+    box.appendChild(cell);
+  });
+  $("#artFlip").checked=ART.flip;
+}
 
 /* ---- 難度按鈕 ---- */
 function buildDiffs(){
@@ -1558,6 +1835,7 @@ function start(){
   startTime=Date.now();
   $$(".pm").forEach(g=>g.style.display="none");
   $("#m"+P.k).style.display="";
+  ART.applyHero(); ART.applyBg();
   $("#heroFloat").classList.add("hover");
   $("#pName").textContent=P.n+" "+P.en;
   $("#skillTag").textContent="◆ "+P.skill;
@@ -1589,6 +1867,7 @@ function loadEnemy(){
   $("#enemyBody").classList.remove("wreck");
   $$(".em").forEach(g=>g.style.display="none");
   $("#"+d.art).style.display="";
+  ART.applyEnemy();
   placeEnemy();
   $("#enemyFloat").classList.add("hover");
   $("#eWeak").innerHTML=d.weak?("弱點屬性：<b>"+d.weak+"</b>（答對該類別傷害 x2）"):"—";
@@ -1936,8 +2215,8 @@ function defeat(){
   onomat("撃破！","#ffd93c"); burst(74,"#ffd93c");
   const bossNext=(stage===ENEMIES.length-1);
   $("#q").innerHTML=bossNext
-    ? "💥 五台敵機全數擊破！　<b>LEVEL UP</b> → LV "+P.lv+"　正在整理中場檢討…"
-    : "💥 敵機擊破！　<b>LEVEL UP</b> → LV "+P.lv+"（HP 回復・ATK +6・裝甲 +3%）";
+    ? "💥 五名敵忍全數擊破！　<b>LEVEL UP</b> → LV "+P.lv+"　正在整理中場檢討…"
+    : "💥 敵忍擊破！　<b>LEVEL UP</b> → LV "+P.lv+"（HP 回復・ATK +6・裝甲 +3%）";
   $("#opts").innerHTML=""; $("#exp").classList.remove("show");
   countdown(FB_LEVEL);
   setTimeout(()=>{ if(bossNext){showMid()} else {loadEnemy();nextQ()} },FB_LEVEL);
@@ -1958,14 +2237,14 @@ function reportHTML(final){
   const mins=Math.max(1,Math.round((Date.now()-startTime)/60000));
   let h='<div class="sect">▍'+(final?"戰鬥紀錄":"目前戰況")+'</div>';
   const rows=final?[
-    ["使用機體",P.n+" "+P.en+"（"+P.type+"）　LV "+P.lv],
+    ["使用忍者",P.n+" "+P.en+"（"+P.type+"）　LV "+P.lv],
     ["答對 / 總題數",stats.right+" / "+total+"　正確率 "+Math.round(acc*100)+"%"],
     ["最高連擊","COMBO x"+P.best],
     ["平均作答時間",avg.toFixed(1)+" 秒 / 題"],
     ["抵達關卡",(stage>=ENEMIES.length)?"全破 6 / 6":(stage+1)+" / 6"],
     ["總作戰時間","約 "+mins+" 分鐘"]
   ]:[
-    ["已擊破","5 台敵機　目前 LV "+P.lv],
+    ["已擊破","5 名敵忍　目前 LV "+P.lv],
     ["答對 / 總題數",stats.right+" / "+total+"　正確率 "+Math.round(acc*100)+"%"],
     ["最高連擊","COMBO x"+P.best],
     ["平均作答時間",avg.toFixed(1)+" 秒 / 題"],
@@ -2023,7 +2302,7 @@ function showMid(){
   clearInterval(timerId);
   const total=stats.right+stats.wrong;
   const acc=total?Math.round(stats.right/total*100):0;
-  $("#midSub").innerHTML="五台敵機全部擊破。最終魔神 <b style=\'color:#ffc93c\'>GRAMMAROS</b> 比前面所有敵機都強 —— "
+  $("#midSub").innerHTML="五名敵忍全部擊破。最終魔神 <b style=\'color:#ffc93c\'>GRAMMAROS</b> 比前面所有敵機都強 —— "
     +"進場前先看一下自己錯在哪，目前正確率 <b style=\'color:#ffc93c\'>"+acc+"%</b>。";
   $("#midReport").innerHTML=reportHTML(false);
   $("#scMid").classList.remove("hide");
@@ -2047,16 +2326,26 @@ function end(win){
                                :'<span style="color:#ff4d6d">MISSION FAILED</span>';
   $("#grade").innerHTML='<span style="color:'+gc+'">'+g+'</span>';
   $("#overSub").textContent=win?"你擊破了最終魔神 GRAMMAROS！下面是這一戰的完整檢討。"
-                               :"機體被擊墜。先看下面的弱點分析，補完再出擊一次。";
+                               :"忍者被擊倒。先看下面的弱點分析，補完再出擊一次。";
 
   $("#report").innerHTML=reportHTML(true);
   $("#scOver").classList.remove("hide");
 }
 
+/* 自訂圖片：在 ART 定義之後才初始化（放太前面會踩到 TDZ） */
+ART.load();
+ART.probe().then(()=>{ if(!$("#scArt").classList.contains("hide"))buildArt(); });
+
 /* ============ 事件 ============ */
 $("#btnToPick").onclick=()=>{SND.init();if(SND.ctx&&SND.ctx.state==="suspended")SND.ctx.resume();
   buildPicks();buildDiffs();$("#scTitle").classList.add("hide");$("#scPick").classList.remove("hide")};
 $("#btnBackTitle").onclick=()=>{$("#scPick").classList.add("hide");$("#scTitle").classList.remove("hide")};
+$("#btnArt").onclick=()=>{buildArt();$("#artMsg").textContent="";
+  $("#scTitle").classList.add("hide");$("#scArt").classList.remove("hide")};
+$("#btnArtBack").onclick=()=>{$("#scArt").classList.add("hide");$("#scTitle").classList.remove("hide")};
+$("#artFlip").onchange=e=>{ART.flip=e.target.checked;ART.save();
+  $("#artMsg").textContent=ART.flip?"敵方圖片會左右翻轉":"敵方圖片維持原方向"};
+$("#artClear").onclick=()=>{ART.clearAll();buildArt();$("#artMsg").textContent="已清除全部自訂圖片"};
 $("#btnStart").onclick=()=>{if(chosen)start()};
 $("#btnToBoss").onclick=()=>{$("#scMid").classList.add("hide");loadEnemy();nextQ()};
 $("#btnAgain").onclick=()=>{if(chosen)start()};
