@@ -202,6 +202,7 @@ body{
     repeating-linear-gradient(115deg, rgba(255,255,255,.045) 0 2px, transparent 2px 9px),
     radial-gradient(circle at 50% 30%, #1e2a4a, #070a11 70%);color:var(--paper)}
 .screen.hide{display:none}
+.hide{display:none}   /* 通用：按鈕等非 .screen 元素也要能隱藏 */
 .jp{font-size:11px;letter-spacing:6px;color:var(--gold);font-weight:900;margin-bottom:6px}
 .screen h1{font-size:clamp(28px,5.4vw,52px);font-weight:900;font-style:italic;letter-spacing:1px;
   color:var(--paper);-webkit-text-stroke:2px #000;paint-order:stroke fill;line-height:1.15}
@@ -216,6 +217,41 @@ body{
 .btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 #000}
 .btn:disabled{opacity:.4;cursor:default;transform:none;box-shadow:5px 5px 0 #000}
 
+/* 肉鴿：路線卡 / 獎勵卡 / 卷軸列 */
+#nodeRow{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:16px;width:100%}
+.ncard{background:var(--paper);border:4px solid #000;border-radius:14px;padding:14px 12px;width:190px;
+  cursor:pointer;text-align:center;box-shadow:4px 4px 0 rgba(0,0,0,.65);transition:.13s}
+.ncard:hover{transform:translateY(-6px);box-shadow:4px 11px 0 rgba(0,0,0,.65)}
+.ncard .ic{font-size:34px;line-height:1.1}
+.ncard .nn{font-size:15px;font-weight:900;color:var(--ink);margin-top:3px}
+.ncard .nd{font-size:11px;color:#4b5563;font-weight:700;margin-top:5px;line-height:1.5}
+.ncard.rare{border-color:#7c3aed;box-shadow:4px 4px 0 rgba(124,58,237,.6)}
+.ncard.buy{width:210px}
+.ncard .cost{display:inline-block;margin-top:7px;background:var(--ink);color:var(--gold);
+  border-radius:6px;padding:2px 10px;font-size:11.5px;font-weight:900}
+.ncard.no{opacity:.42;cursor:not-allowed}
+.ncard.no:hover{transform:none;box-shadow:4px 4px 0 rgba(0,0,0,.65)}
+#runBar{display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap;
+  background:rgba(255,250,240,.09);border:2px solid rgba(255,250,240,.25);border-radius:11px;
+  padding:8px 16px;margin-top:10px;font-size:13px;font-weight:800;color:#e8eef8}
+#runBar b{color:var(--gold)}
+#relicRow{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:9px;max-width:660px}
+.rel{background:var(--paper);border:2.5px solid #000;border-radius:8px;padding:3px 8px;
+  font-size:11px;font-weight:800;color:var(--ink);display:flex;gap:4px;align-items:center}
+.rel.r1{border-color:#7c3aed;background:#f3e8ff}
+.rel.r2{border-color:#b45309;background:#fef3c7}
+/* 戰鬥中的卷軸列 */
+#hudRelic{position:absolute;left:12px;bottom:12px;z-index:5;display:flex;gap:4px;flex-wrap:wrap;max-width:52%}
+#hudRelic .rr{width:26px;height:26px;border-radius:7px;background:var(--paper);border:2.5px solid var(--ink);
+  display:grid;place-items:center;font-size:13px;box-shadow:2px 2px 0 rgba(0,0,0,.45)}
+#eventTxt{max-width:620px;font-size:14px;line-height:1.9;color:#e8eef8;
+  background:rgba(255,250,240,.08);border-left:5px solid var(--gold);border-radius:9px;
+  padding:12px 16px;margin-top:12px;text-align:left}
+#nodeMsg{margin-top:10px;font-size:13px;font-weight:800;color:var(--gold);min-height:1.3em}
+@media(max-width:700px){
+  .ncard{width:44%;padding:10px 8px}.ncard .ic{font-size:26px}.ncard .nn{font-size:13px}
+  #hudRelic{max-width:44%}
+}
 /* 換角色圖 */
 #artGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:10px;
   width:100%;max-width:880px;margin-top:12px;max-height:44vh;overflow-y:auto;padding:2px}
@@ -479,6 +515,7 @@ body{
       <div id="eWeak">—</div>
       <div id="eCharge">⚡ 蓄力中：下一題答錯將受到 2 倍傷害</div>
     </div>
+    <div id="hudRelic"></div>
     <button id="btnSound">🔊 BGM / SE：ON</button>
     <div id="onomat"></div><div id="combo"></div>
   </div>
@@ -503,9 +540,16 @@ body{
     </p>
     <p style="font-size:12px;opacity:.6;margin-top:10px">鍵盤 A / B / C / D 或 1～4 作答</p>
     <div class="row2">
-      <button class="btn" id="btnToPick">▶ 出擊</button>
+      <button class="btn" id="btnToPick">▶ 關卡模式</button>
+      <button class="btn" id="btnRogue" style="background:#a855f7;color:#fff">🎲 忍道（肉鴿）</button>
+    </div>
+    <div class="row2" style="margin-top:4px">
       <button class="btn ghost" id="btnArt">🖼 換角色圖</button>
     </div>
+    <p style="font-size:11.5px;opacity:.62;margin-top:8px;max-width:560px">
+      關卡模式：固定六關，適合第一次玩。<br>
+      忍道：路線自己選、戰後撿卷軸疊能力、倒下就從頭來 —— 每局都不一樣。
+    </p>
   </div>
 
   <!-- ===== 選擇機體 ===== -->
@@ -537,6 +581,27 @@ body{
     </div>
     <div id="artMsg"></div>
     <button class="btn" id="btnArtBack">← 返回</button>
+  </div>
+
+  <!-- ===== 忍道：路線與節點 ===== -->
+  <div class="screen hide" id="scNode">
+    <div class="jp" id="nodeJp">忍道 · NINJA ROAD</div>
+    <h2 id="nodeTitle" style="color:#ffc93c">選擇路線</h2>
+    <p id="nodeSub" style="max-width:600px"></p>
+    <div id="runBar">
+      <span>進度 <b id="runStep">0/12</b></span>
+      <span>HP <b id="runHp">0/0</b></span>
+      <span>小判 <b id="runGold">0</b></span>
+      <span>回復藥 <b id="runPot">0</b></span>
+    </div>
+    <div id="relicRow"></div>
+    <div id="eventTxt" style="display:none"></div>
+    <div id="nodeRow"></div>
+    <div id="nodeMsg"></div>
+    <div class="row2">
+      <button class="btn ghost hide" id="btnPotion">🧪 使用回復藥</button>
+      <button class="btn hide" id="btnNodeGo">▶ 繼續前進</button>
+    </div>
   </div>
 
   <!-- ===== 中場檢討（進 BOSS 前） ===== -->
@@ -1661,7 +1726,7 @@ function fitScene(){
   if(typeof E!=="undefined"&&E)placeEnemy();
 }
 function placeEnemy(){
-  const d=ENEMIES[Math.min(stage,ENEMIES.length-1)];
+  const d=CURE||ENEMIES[Math.min(stage,ENEMIES.length-1)];
   $("#enemy").setAttribute("transform","translate("+SCENE.ex.toFixed(1)+",452) scale("+(SCENE.s*d.sc).toFixed(3)+")");
 }
 window.addEventListener("resize",()=>{fitScene();FX.resize()});
@@ -1745,7 +1810,8 @@ const ART={
     else { im.style.display="none"; }
   },
   applyEnemy(){
-    const src=this.data["enemy_"+stage], im=$("#enemyImg");
+    const slot=(CURE&&CURE.slot!==undefined)?CURE.slot:stage;
+    const src=this.data["enemy_"+slot], im=$("#enemyImg");
     if(src){ im.setAttribute("href",src); im.style.display="";
              im.setAttribute("transform",this.flip?"scale(-1,1)":"");
              $$(".em").forEach(g=>g.style.display="none"); }
@@ -1783,6 +1849,238 @@ function buildArt(){
     box.appendChild(cell);
   });
   $("#artFlip").checked=ART.flip;
+}
+
+/* ============ 忍道 · Roguelike 模式 ============ */
+let MODE="story";          /* story = 原本的六關；rogue = 肉鴿 */
+let RUN=null;
+
+/* ---- 忍術卷軸 ---- */
+const RELICS=[
+ {k:"katon",  n:"火遁の書",   ic:"🔥", d:"攻擊力 +15%",                      r:0, e:{atkMul:.15}},
+ {k:"fuuton", n:"風遁の書",   ic:"🌀", d:"答得快的加成再提升一倍",             r:0, e:{spdMul:1}},
+ {k:"doton",  n:"土遁の護符", ic:"🛡", d:"減傷 +8%",                         r:0, e:{defAdd:.08}},
+ {k:"kusuri", n:"治癒の玉",   ic:"💚", d:"每答對一題回復 4 HP",                r:0, e:{healHit:4}},
+ {k:"renge",  n:"連撃の印",   ic:"⚡", d:"COMBO 倍率成長 +35%",               r:0, e:{cmbAdd:.35}},
+ {k:"hachi",  n:"気合の鉢巻", ic:"🎽", d:"SP 累積速度 +1（必殺技更快發動）",    r:0, e:{spAdd:1}},
+ {k:"suna",   n:"時の砂",     ic:"⏳", d:"每題作答時間 +4 秒",                r:0, e:{timeAdd:4}},
+ {k:"mikiri", n:"見切りの目", ic:"👁", d:"每場戰鬥第一次答錯不受傷害",         r:1, e:{firstShield:1}},
+ {k:"kaeshi", n:"返し刃",     ic:"🗡", d:"答錯時仍對敵人造成 30% 傷害",        r:1, e:{counter:.30}},
+ {k:"manabi", n:"学びの書",   ic:"📖", d:"答錯之後，下一題答對傷害 x1.6",      r:1, e:{comeback:1.6}},
+ {k:"kanpa",  n:"弱點看破",   ic:"🎯", d:"弱點屬性傷害由 x2 提升為 x2.6",      r:1, e:{weakUp:.6}},
+ {k:"shuchu", n:"集中の巻",   ic:"🧘", d:"每連續答對 5 題回復 18 HP",          r:1, e:{streakHeal:18}},
+ {k:"fukusyu",n:"復習の書",   ic:"🔁", d:"答錯的題目會在稍後再出現一次",        r:1, e:{review:1}},
+ {k:"kiseki", n:"奇跡の札",   ic:"✨", d:"每局一次：HP 歸零時以 40% HP 復活",  r:2, e:{revive:1}}
+];
+const RELIC_BY={}; RELICS.forEach(r=>RELIC_BY[r.k]=r);
+
+/* 把身上的卷軸加總成一組修正值 */
+function relicSum(){
+  const s={atkMul:0,spdMul:0,defAdd:0,healHit:0,cmbAdd:0,spAdd:0,timeAdd:0,
+           firstShield:0,counter:0,comeback:0,weakUp:0,streakHeal:0,review:0,revive:0};
+  if(!RUN)return s;
+  RUN.relics.forEach(k=>{ const r=RELIC_BY[k]; if(!r)return;
+    for(const f in r.e) s[f]=(s[f]||0)+r.e[f]; });
+  return s;
+}
+
+/* ---- 路線節點 ---- */
+const NODE={
+  battle:{n:"戰鬥", ic:"⚔", d:"與敵忍交戰，勝利後可獲得卷軸與小判"},
+  elite: {n:"菁英", ic:"💀", d:"強敵。難度高，但獎勵是稀有卷軸"},
+  rest:  {n:"休息", ic:"🔥", d:"在營火旁回復 35% HP"},
+  shop:  {n:"商店", ic:"🏪", d:"用小判購買卷軸或回復藥"},
+  event: {n:"事件", ic:"❓", d:"路上的意外。可能是機會，也可能是陷阱"},
+  boss:  {n:"BOSS",ic:"👹", d:"最終魔神 GRAMMAROS"}
+};
+const RUN_LEN=12;   /* 一局的節點數 */
+
+function newRun(){
+  RUN={ step:0, gold:55, relics:[], potions:1, choices:[], usedRevive:false,
+        wrongQueue:[], lastWrong:false, streak:0, log:[] };
+  rollChoices();
+}
+/* 產生下一步的 2～3 個選項 */
+function rollChoices(){
+  const st=RUN.step;                    /* 已完成的節點數 */
+  if(st>=RUN_LEN){ RUN.choices=[]; return; }
+  if(st===RUN_LEN-1){ RUN.choices=["boss"]; return; }
+  if(st===3||st===7){ RUN.choices=["elite"]; return; }
+  const pool=["battle","battle","rest","shop","event"];
+  const picks=[];
+  while(picks.length<3&&pool.length){
+    const i=Math.random()*pool.length|0;
+    const t=pool.splice(i,1)[0];
+    if(t==="battle"&&picks.includes("battle"))continue;
+    picks.push(t);
+  }
+  if(!picks.includes("battle"))picks[0]="battle";
+  RUN.choices=picks;
+}
+/* 依深度產生敵人 */
+function rogueEnemy(kind){
+  const depth=RUN.step;
+  const base=ENEMIES[Math.min(ENEMIES.length-2,Math.floor(depth/2))];
+  const boss=(kind==="boss");
+  const elite=(kind==="elite");
+  const mul=boss?1:(elite?1.35:1)*(1+depth*0.14);
+  const src=boss?ENEMIES[ENEMIES.length-1]:base;
+  return {...src, slot:ENEMIES.indexOf(src),
+    n:boss?src.n:(elite?"菁英・"+src.n:src.n),
+    hp:Math.round(src.hp*(boss?1:mul*0.55)),
+    atk:Math.round(src.atk*(boss?1:(elite?1.3:1)*(1+depth*0.06))),
+    boss:boss, elite:elite};
+}
+/* 抽卷軸（不重複） */
+function rollRelics(n,minRare){
+  const owned=new Set(RUN.relics);
+  const pool=RELICS.filter(r=>!owned.has(r.k)&&r.r>=(minRare||0));
+  const out=[];
+  while(out.length<n&&pool.length) out.push(pool.splice(Math.random()*pool.length|0,1)[0]);
+  if(!out.length){ /* 都拿光了就給補品 */ return []; }
+  return out;
+}
+/* ---- 事件表 ---- */
+const EVENTS=[
+ {n:"路旁的老忍者", t:"一名白髮老忍者攔住你，說要考考你的本事。",
+  opts:[{l:"接受試煉",d:"獲得一張卷軸",f:r=>({relic:1})},
+        {l:"婉拒並休息",d:"回復 30 HP",f:r=>({heal:30})}]},
+ {n:"毒沼", t:"前方是一片冒著紫氣的沼澤。抄捷徑可以省下不少時間。",
+  opts:[{l:"涉水而過",d:"損失 15 HP，獲得 45 小判",f:r=>({hp:-15,gold:45})},
+        {l:"繞路",d:"平安無事",f:r=>({})}]},
+ {n:"廢棄的道場", t:"道場裡積滿灰塵，角落有個上鎖的木箱。",
+  opts:[{l:"撬開木箱",d:"獲得 60 小判",f:r=>({gold:60})},
+        {l:"在此打坐",d:"回復 40 HP",f:r=>({heal:40})}]},
+ {n:"商隊", t:"一支商隊願意用你的小判換取補給。",
+  opts:[{l:"買下回復藥（40 小判）",d:"回復藥 +1",f:r=>(RUN.gold>=40?{gold:-40,potion:1}:{msg:"小判不足"})},
+        {l:"直接離開",d:"什麼也不做",f:r=>({})}]},
+ {n:"神社的籤", t:"你在神社抽了一支籤。",
+  opts:[{l:"求武運",d:"損失 25 HP，獲得一張稀有卷軸",f:r=>({hp:-25,relic:1,rare:1})},
+        {l:"求財運",d:"獲得 95 小判",f:r=>({gold:95})}]}
+];
+
+/* ---- 目前這場戰鬥的敵人定義（肉鴿模式會覆寫）---- */
+let CURE=null;
+
+/* ---- 忍道畫面 ---- */
+function drawRun(){
+  $("#runStep").textContent=RUN.step+"/"+RUN_LEN;
+  $("#runHp").textContent=Math.max(0,Math.round(P.hp))+"/"+P.max;
+  $("#runGold").textContent=RUN.gold;
+  $("#runPot").textContent=RUN.potions;
+  const rr=$("#relicRow"); rr.innerHTML="";
+  RUN.relics.forEach(k=>{ const r=RELIC_BY[k]; if(!r)return;
+    const d=document.createElement("div"); d.className="rel r"+r.r;
+    d.innerHTML='<span>'+r.ic+'</span><span>'+r.n+'</span>'; d.title=r.d; rr.appendChild(d); });
+  const hb=$("#hudRelic"); if(hb){ hb.innerHTML="";
+    if(MODE==="rogue")RUN.relics.forEach(k=>{ const r=RELIC_BY[k]; if(!r)return;
+      const d=document.createElement("div"); d.className="rr"; d.textContent=r.ic; d.title=r.n+"："+r.d;
+      hb.appendChild(d); }); }
+}
+function nodeUI(title,sub,cards,o){
+  o=o||{};
+  $("#nodeTitle").textContent=title;
+  $("#nodeSub").innerHTML=sub||"";
+  $("#eventTxt").style.display=o.text?"block":"none";
+  if(o.text)$("#eventTxt").innerHTML=o.text;
+  $("#nodeMsg").textContent=o.msg||"";
+  const row=$("#nodeRow"); row.innerHTML="";
+  cards.forEach(c=>{
+    const d=document.createElement("div");
+    d.className="ncard"+(c.rare?" rare":"")+(c.cost!==undefined?" buy":"")+(c.disabled?" no":"");
+    d.innerHTML='<div class="ic">'+c.ic+'</div><div class="nn">'+c.n+'</div>'
+      +'<div class="nd">'+c.d+'</div>'+(c.cost!==undefined?'<div class="cost">'+c.cost+' 小判</div>':'');
+    if(!c.disabled)d.onclick=c.go;
+    row.appendChild(d);
+  });
+  $("#btnNodeGo").classList.toggle("hide",!o.go);
+  $("#btnPotion").classList.toggle("hide",!(MODE==="rogue"&&RUN&&RUN.potions>0&&o.potion));
+  $("#btnNodeGo").onclick=o.go||null;
+  drawRun();
+  $$(".screen").forEach(e=>e.classList.add("hide"));
+  $("#scNode").classList.remove("hide");
+}
+function showPath(){
+  if(RUN.step>=RUN_LEN)return end(true);
+  const cards=RUN.choices.map(t=>({ic:NODE[t].ic,n:NODE[t].n,d:NODE[t].d,
+    go:()=>enterNode(t)}));
+  nodeUI("選擇路線","第 "+(RUN.step+1)+" 個節點 —— 選一條路走下去。",cards,{potion:1});
+}
+function enterNode(t){
+  if(t==="battle"||t==="elite"||t==="boss"){ CURE=rogueEnemy(t); startBattle(); return; }
+  if(t==="rest"){
+    const h=Math.round(P.max*.35); P.hp=Math.min(P.max,P.hp+h);
+    nodeUI("營火","你在火堆旁歇了一會兒。",[],
+      {text:"回復了 <b>"+h+"</b> HP。",go:()=>{advance()}});
+    SND.heal(); return;
+  }
+  if(t==="shop"){ showShop(); return; }
+  if(t==="event"){ showEvent(); return; }
+}
+function showShop(){
+  const stock=rollRelics(2,0);
+  const cards=stock.map(r=>{
+    const cost=r.r>=1?135:85;
+    return {ic:r.ic,n:r.n,d:r.d,cost:cost,rare:r.r>=1,disabled:RUN.gold<cost,
+      go:()=>{ if(RUN.gold<cost)return; RUN.gold-=cost; RUN.relics.push(r.k);
+               SND.levelup(); showShop(); }};
+  });
+  cards.push({ic:"🧪",n:"回復藥",d:"戰鬥中或路上使用，回復 45 HP",cost:52,
+    disabled:RUN.gold<52,go:()=>{ if(RUN.gold<52)return; RUN.gold-=52; RUN.potions++;
+      SND.heal(); showShop(); }});
+  cards.push({ic:"❤",n:"療傷",d:"立即回復 50 HP",cost:58,
+    disabled:RUN.gold<58||P.hp>=P.max,go:()=>{ if(RUN.gold<58)return; RUN.gold-=58;
+      P.hp=Math.min(P.max,P.hp+50); SND.heal(); showShop(); }});
+  nodeUI("商店","用小判換取補給。買完按「繼續前進」。",cards,{go:()=>advance(),potion:1});
+}
+function showEvent(){
+  const ev=EVENTS[Math.random()*EVENTS.length|0];
+  const cards=ev.opts.map(op=>({ic:"▶",n:op.l,d:op.d,go:()=>{
+    const r=op.f()||{}; let msg=[];
+    if(r.msg){ nodeUI(ev.n,"",cards,{text:ev.t,msg:"⚠ "+r.msg}); return; }
+    if(r.gold){ RUN.gold=Math.max(0,RUN.gold+r.gold); msg.push((r.gold>0?"+":"")+r.gold+" 小判"); }
+    if(r.hp){ P.hp=Math.max(1,P.hp+r.hp); msg.push(r.hp+" HP"); }
+    if(r.heal){ const h=Math.min(r.heal,P.max-P.hp); P.hp+=h; msg.push("+"+h+" HP"); SND.heal(); }
+    if(r.potion){ RUN.potions+=r.potion; msg.push("回復藥 +"+r.potion); }
+    if(r.relic){ const g=rollRelics(1,r.rare||0);
+      if(g.length){ RUN.relics.push(g[0].k); msg.push("獲得卷軸「"+g[0].n+"」"); SND.levelup(); } }
+    nodeUI(ev.n,"",[],{text:ev.t+"<br><br><b style='color:#ffc93c'>"+(msg.join("・")||"什麼也沒發生")+"</b>",
+      go:()=>advance()});
+  }}));
+  nodeUI(ev.n,"",cards,{text:ev.t});
+}
+function showReward(kind){
+  const gold=kind==="boss"?0:(kind==="elite"?Math.round(38+Math.random()*24):Math.round(17+Math.random()*15));
+  RUN.gold+=gold;
+  const picks=rollRelics(3,kind==="elite"?1:0);
+  if(!picks.length){ nodeUI("勝利","卷軸已全部收集。",[],{text:"獲得 <b>"+gold+"</b> 小判。",go:()=>advance()}); return; }
+  const cards=picks.map(r=>({ic:r.ic,n:r.n,d:r.d,rare:r.r>=1,
+    go:()=>{ RUN.relics.push(r.k); SND.levelup();
+      nodeUI("已取得","",[],{text:"獲得卷軸 <b>"+r.ic+" "+r.n+"</b><br>"+r.d,go:()=>advance()}); }}));
+  cards.push({ic:"⏭",n:"略過",d:"不拿卷軸，改拿 40 小判",go:()=>{RUN.gold+=40;advance()}});
+  nodeUI("勝利！","選一張卷軸帶走。",cards,{text:"獲得 <b>"+gold+"</b> 小判。"});
+}
+function advance(){
+  RUN.step++;
+  if(RUN.step>=RUN_LEN)return end(true);
+  rollChoices(); showPath();
+}
+/* 使用回復藥 */
+function usePotion(){
+  if(!RUN||RUN.potions<=0||P.hp>=P.max)return;
+  RUN.potions--; const h=Math.min(45,P.max-P.hp); P.hp+=h; SND.heal();
+  drawRun(); drawP();
+  $("#nodeMsg").textContent="使用回復藥，回復 "+h+" HP";
+}
+/* 進入一場肉鴿戰鬥 */
+function startBattle(){
+  const R=relicSum();
+  TIME=DIFF.time+R.timeAdd;
+  RUN.shieldUsed=false;
+  $$(".screen").forEach(e=>e.classList.add("hide"));
+  FX.clear(); fitScene(); loadEnemy(); drawP(); drawSP(); drawRun();
+  SND.play(CURE.boss?"boss":"normal");
+  nextQ();
 }
 
 /* ---- 難度按鈕 ---- */
@@ -1839,19 +2137,26 @@ function start(){
   $("#heroFloat").classList.add("hover");
   $("#pName").textContent=P.n+" "+P.en;
   $("#skillTag").textContent="◆ "+P.skill;
-  FX.init(); FX.clear(); fitScene(); loadEnemy(); drawP(); drawSP();
+  FX.init(); FX.clear(); fitScene();
+  if(MODE==="rogue"){
+    CURE=null; newRun(); drawP(); drawSP();
+    $$(".screen").forEach(e=>e.classList.add("hide"));
+    SND.play("normal"); showPath(); return;
+  }
+  CURE=null; loadEnemy(); drawP(); drawSP();
   $("#scTitle").classList.add("hide"); $("#scPick").classList.add("hide");
-  $("#scOver").classList.add("hide"); $("#scMid").classList.add("hide");
+  $("#scOver").classList.add("hide"); $("#scMid").classList.add("hide"); $("#scNode").classList.add("hide");
   SND.play("normal");
   nextQ();
 }
 
 function loadEnemy(){
-  const d=ENEMIES[stage];
+  const d=CURE||ENEMIES[stage];
   E={...d, hp:Math.round(d.hp*DIFF.ehp), atk:Math.round(d.atk*DIFF.eatk), charge:false, qcount:0};
   E.max=E.hp;
   $("#eName").textContent=(d.boss?"⚠ FINAL ":"NO."+(stage+1)+" ")+d.n;
-  $("#stageTag").textContent=d.boss?"★ FINAL STAGE ★":"STAGE "+(stage+1)+" / 5";
+  $("#stageTag").textContent=d.boss?"★ FINAL STAGE ★"
+    :(MODE==="rogue"?"節點 "+(RUN.step+1)+" / "+RUN_LEN:"STAGE "+(stage+1)+" / 5");
   $("#hudE").classList.toggle("boss",!!d.boss);
   $("#eS0").setAttribute("stop-color",d.pal[0]);
   $("#eS1").setAttribute("stop-color",d.pal[1]);
@@ -1901,7 +2206,10 @@ function drawE(){
 /* ---- 出題 ---- */
 function nextQ(){
   if(cur>=deck.length){deck=shuffle(BANK);cur=0}
-  const Q=deck[cur++]; locked=false; qStart=Date.now();
+  let Q;
+  if(RUN&&RUN.wrongQueue&&RUN.wrongQueue.length&&Math.random()<.35) Q=RUN.wrongQueue.shift();
+  else Q=deck[cur++];
+  locked=false; qStart=Date.now();
   /* 最終魔神每三題蓄力一次：答對可打斷，答錯受到 2 倍傷害 */
   if(E&&E.boss){
     E.qcount=(E.qcount||0)+1;
@@ -1963,15 +2271,18 @@ function answer(i,Q,btn){
   if(i===Q.a){
     stats.right++; stats.byCat[Q.c].r++;
     P.combo++; P.best=Math.max(P.best,P.combo);
-    const speed=1+Math.max(0,timeLeft/TIME)*P.spd;
-    const cm=Math.min(3,1+(P.combo-1)*P.cmb);
+    const RL=relicSum();
+    const speed=1+Math.max(0,timeLeft/TIME)*P.spd*(1+RL.spdMul);
+    const cm=Math.min(3.6,1+(P.combo-1)*(P.cmb+RL.cmbAdd));
     const rage=(P.rage&&P.combo>=3)?1.3:1;
     const weakHit=!!(E.weak&&Q.c===E.weak);
     const ult=(P.sp>=SP_MAX);
     const tags=[];
-    let dmg=Math.max(6,Math.round(P.atk*cm*speed*rage*(weakHit?2:1))-(ult?0:E.def));
+    const comeback=(RUN&&RUN.lastWrong&&RL.comeback)?RL.comeback:1;
+    if(comeback>1)tags.push("<b>反省の一撃</b>");
+    let dmg=Math.max(6,Math.round(P.atk*(1+RL.atkMul)*cm*speed*rage*comeback*(weakHit?(2+RL.weakUp):1))-(ult?0:E.def));
     if(ult){ dmg=Math.round(dmg*2.5); P.sp=0; tags.push("<b>必殺技發動</b>"); }
-    else { P.sp=Math.min(SP_MAX,P.sp+(P.combo>=3?2:1)); }
+    else { P.sp=Math.min(SP_MAX,P.sp+(P.combo>=3?2:1)+RL.spAdd); }
     if(weakHit) tags.push("<b>弱點直擊 x2</b>");
     if(E.charge){ E.charge=false; $("#eCharge").classList.remove("on"); tags.push("<b>打斷蓄力</b>"); }
     drawSP();
@@ -1982,8 +2293,14 @@ function answer(i,Q,btn){
     }
     if(ult){ ultAttack(dmg); } else { heroAttack(dmg); }
     let extra="";
-    if(P.heal&&P.hp<P.max){
-      const h=Math.min(P.heal,P.max-P.hp); P.hp+=h; drawP();
+    if(RUN){ RUN.lastWrong=false; RUN.streak=(RUN.streak||0)+1;
+      if(RL.streakHeal&&RUN.streak%5===0&&P.hp<P.max){
+        const sh=Math.min(RL.streakHeal,P.max-P.hp); P.hp+=sh; drawP();
+        setTimeout(()=>{float("+"+sh,"heal",22);SND.heal()},760);
+        tags.push("<b>集中 +"+sh+" HP</b>"); } }
+    const healAmt=(P.heal||0)+RL.healHit;
+    if(healAmt&&P.hp<P.max){
+      const h=Math.min(healAmt,P.max-P.hp); P.hp+=h; drawP();
       setTimeout(()=>{float("+"+h,"heal",22);SND.heal()},700);
       extra="　<span style='color:#15803d'>回復 "+h+" HP</span>";
     }
@@ -1995,21 +2312,38 @@ function answer(i,Q,btn){
     stats.wrongList.push({q:Q.q,ans:Q.o[Q.a],pick:(i<0?null:Q.o[i]),e:Q.e,c:Q.c});
     P.combo=0;
     if(btn)btn.classList.add("wrong");
-    const dodged=Math.random()<P.dodge;
+    const RL=relicSum();
+    if(RUN){ RUN.lastWrong=true; RUN.streak=0;
+      if(RL.review)RUN.wrongQueue.push(Q); }
+    let shielded=false;
+    if(RUN&&RL.firstShield&&!RUN.shieldUsed){ RUN.shieldUsed=true; shielded=true; }
+    const dodged=shielded||Math.random()<P.dodge;
     const charged=!!E.charge;
-    const dmg=Math.max(4,Math.round(E.atk*(1-P.def)*(i<0?1.25:1)*(charged?2:1)));
+    const dmg=Math.max(4,Math.round(E.atk*Math.max(.05,1-P.def-RL.defAdd)*(i<0?1.25:1)*(charged?2:1)));
+    if(RL.counter&&E.hp>0){
+      const cd=Math.max(3,Math.round(P.atk*(1+RL.atkMul)*RL.counter)-E.def);
+      setTimeout(()=>{ E.hp-=cd; drawE(); const ep=enemyPt();
+        FX.spark(ep[0],ep[1],"#ffd93c",14,1); float("-"+cd,"",76); },900);
+    }
     if(charged){ E.charge=false; $("#eCharge").classList.remove("on"); }
     enemyAttack(dodged?0:dmg,charged);
     $("#exp").innerHTML=(i<0?"⏰ <b>時間到！</b> ":"❌ <b>答錯了。</b> ")
       +"正解 <b>"+"ABCD"[Q.a]+". "+Q.o[Q.a]+"</b>　"+Q.e
-      +(dodged?"　<span style='color:#0284c7'>迴避成功，未受傷害</span>"
+      +(dodged?("　<span style='color:#0284c7'>"+(shielded?"見切り發動，未受傷害":"迴避成功，未受傷害")+"</span>")
               :"　<span style='opacity:.65'>"+(charged?"<b style='color:#dc2626'>蓄力攻擊 x2！</b> ":"")+"受到 "+dmg+" 傷害</span>");
   }
   $("#exp").classList.add("show");
   const wait=(i===Q.a)?FB_OK:FB_BAD;
   countdown(wait);
   setTimeout(()=>{
-    if(P.hp<=0)return end(false);
+    if(P.hp<=0){
+      const RV=relicSum();
+      if(RUN&&RV.revive&&!RUN.usedRevive){
+        RUN.usedRevive=true; P.hp=Math.round(P.max*.4); drawP();
+        onomat("復活！","#ffd93c"); SND.levelup();
+        const hp=heroPt(); FX.ring(hp[0],hp[1],"#ffd93c"); FX.spark(hp[0],hp[1],"#fff",34,1.8);
+      } else return end(false);
+    }
     if(E.hp<=0)return defeat();
     nextQ();
   },wait);
@@ -2118,7 +2452,7 @@ function quake(big){
 }
 /* 機體在畫面上的胸口座標（viewBox 單位） */
 function heroPt(){ return [SCENE.hx, 452-150*SCENE.s*0.9]; }
-function enemyPt(){ const d=ENEMIES[Math.min(stage,ENEMIES.length-1)];
+function enemyPt(){ const d=CURE||ENEMIES[Math.min(stage,ENEMIES.length-1)];
   return [SCENE.ex, 452-150*SCENE.s*d.sc]; }
 
 /* ---- 演出 ---- */
@@ -2197,6 +2531,22 @@ function enemyAttack(d,charged){
   },230);
 }
 function defeat(){
+  if(MODE==="rogue"){
+    const kind=CURE&&CURE.boss?"boss":(CURE&&CURE.elite?"elite":"battle");
+    {
+      const to=enemyPt(), c=E.core||"#ff4d6d";
+      FX.ring(to[0],to[1],"#fff"); FX.spark(to[0],to[1],"#ffd93c",34,1.9);
+      FX.debris(to[0],to[1],c,18); quake(true);
+      $("#enemyBody").classList.add("wreck");
+    }
+    const hb=Math.min(Math.round(P.max*.12),P.max-P.hp);
+    if(hb>0){ P.hp+=hb; drawP(); }
+    onomat("撃破！","#ffd93c"); SND.levelup();
+    $("#q").innerHTML="💥 敵忍擊破！"+(hb>0?"　<b>回復 "+hb+" HP</b>":""); $("#opts").innerHTML=""; $("#exp").classList.remove("show");
+    countdown(FB_LEVEL);
+    setTimeout(()=>{ if(kind==="boss"){ RUN.step=RUN_LEN; end(true); } else showReward(kind); },FB_LEVEL);
+    return;
+  }
   stage++;
   if(stage>=ENEMIES.length)return end(true);
   SND.levelup();
@@ -2241,7 +2591,12 @@ function reportHTML(final){
     ["答對 / 總題數",stats.right+" / "+total+"　正確率 "+Math.round(acc*100)+"%"],
     ["最高連擊","COMBO x"+P.best],
     ["平均作答時間",avg.toFixed(1)+" 秒 / 題"],
-    ["抵達關卡",(stage>=ENEMIES.length)?"全破 6 / 6":(stage+1)+" / 6"],
+    (MODE==="rogue"
+      ? ["忍道進度",(RUN&&RUN.step>=RUN_LEN)?"全破 "+RUN_LEN+" / "+RUN_LEN:(RUN?RUN.step:0)+" / "+RUN_LEN+" 節點"]
+      : ["抵達關卡",(stage>=ENEMIES.length)?"全破 6 / 6":(stage+1)+" / 6"]),
+    (MODE==="rogue"
+      ? ["取得卷軸",(RUN&&RUN.relics.length)?RUN.relics.map(k=>RELIC_BY[k].ic+RELIC_BY[k].n).join("・"):"無"]
+      : ["最高連擊","COMBO x"+P.best]),
     ["總作戰時間","約 "+mins+" 分鐘"]
   ]:[
     ["已擊破","5 名敵忍　目前 LV "+P.lv],
@@ -2325,8 +2680,9 @@ function end(win){
   $("#overTitle").innerHTML=win?'<span style="color:#ffd93c">MISSION COMPLETE</span>'
                                :'<span style="color:#ff4d6d">MISSION FAILED</span>';
   $("#grade").innerHTML='<span style="color:'+gc+'">'+g+'</span>';
-  $("#overSub").textContent=win?"你擊破了最終魔神 GRAMMAROS！下面是這一戰的完整檢討。"
-                               :"忍者被擊倒。先看下面的弱點分析，補完再出擊一次。";
+  $("#overSub").textContent=win
+    ?(MODE==="rogue"?"忍道全破！你走完了 "+RUN_LEN+" 個節點並擊敗最終魔神。":"你擊破了最終魔神 GRAMMAROS！下面是這一戰的完整檢討。")
+    :(MODE==="rogue"?"忍者倒下了，這一局到此結束。看完檢討再跑一局 —— 路線和卷軸每次都不一樣。":"忍者被擊倒。先看下面的弱點分析，補完再出擊一次。");
 
   $("#report").innerHTML=reportHTML(true);
   $("#scOver").classList.remove("hide");
@@ -2337,7 +2693,7 @@ ART.load();
 ART.probe().then(()=>{ if(!$("#scArt").classList.contains("hide"))buildArt(); });
 
 /* ============ 事件 ============ */
-$("#btnToPick").onclick=()=>{SND.init();if(SND.ctx&&SND.ctx.state==="suspended")SND.ctx.resume();
+$("#btnToPick").onclick=()=>{MODE="story";SND.init();if(SND.ctx&&SND.ctx.state==="suspended")SND.ctx.resume();
   buildPicks();buildDiffs();$("#scTitle").classList.add("hide");$("#scPick").classList.remove("hide")};
 $("#btnBackTitle").onclick=()=>{$("#scPick").classList.add("hide");$("#scTitle").classList.remove("hide")};
 $("#btnArt").onclick=()=>{buildArt();$("#artMsg").textContent="";
@@ -2346,7 +2702,13 @@ $("#btnArtBack").onclick=()=>{$("#scArt").classList.add("hide");$("#scTitle").cl
 $("#artFlip").onchange=e=>{ART.flip=e.target.checked;ART.save();
   $("#artMsg").textContent=ART.flip?"敵方圖片會左右翻轉":"敵方圖片維持原方向"};
 $("#artClear").onclick=()=>{ART.clearAll();buildArt();$("#artMsg").textContent="已清除全部自訂圖片"};
+$("#btnRogue").onclick=()=>{MODE="rogue";SND.init();
+  if(SND.ctx&&SND.ctx.state==="suspended")SND.ctx.resume();
+  buildPicks();buildDiffs();
+  $("#scTitle").classList.add("hide");$("#scPick").classList.remove("hide");
+  $("#pickInfo").innerHTML="<b>忍道（肉鴿）模式</b>　路線自己選、戰後撿卷軸疊能力、倒下就從頭來。先挑一名忍者。";};
 $("#btnStart").onclick=()=>{if(chosen)start()};
+$("#btnPotion").onclick=usePotion;
 $("#btnToBoss").onclick=()=>{$("#scMid").classList.add("hide");loadEnemy();nextQ()};
 $("#btnAgain").onclick=()=>{if(chosen)start()};
 $("#btnChange").onclick=()=>{$("#scOver").classList.add("hide");buildPicks();$("#scPick").classList.remove("hide")};
@@ -2361,6 +2723,8 @@ document.addEventListener("keydown",e=>{
   if(e.key==="Enter"){
     if(!$("#scTitle").classList.contains("hide"))$("#btnToPick").click();
     else if(!$("#scPick").classList.contains("hide")&&chosen)start();
+    else if(!$("#scNode").classList.contains("hide")){
+      const g=$("#btnNodeGo"); if(!g.classList.contains("hide"))g.click(); }
     else if(!$("#scMid").classList.contains("hide"))$("#btnToBoss").click();
     else if(!$("#scOver").classList.contains("hide")&&chosen)start();
   }
