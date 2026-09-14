@@ -350,6 +350,52 @@ button,input,select{font:inherit}button{touch-action:manipulation}button:focus-v
 @media(max-height:700px){#app{height:auto;min-height:100dvh}#scene{flex:none;height:280px}.screen{position:fixed}#scTitle{position:fixed}#cPractice{position:fixed}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;scroll-behavior:auto!important;transition:none!important}}
 
+/* Mobile overflow fix: scroll content instead of shrinking text containers. */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+.screen>*,.c-practice-wrap>*{flex-shrink:0}
+.screen{overscroll-behavior:contain;padding-bottom:max(28px,env(safe-area-inset-bottom))}
+#pickInfo{height:auto;min-height:0;max-height:none;overflow-wrap:anywhere}
+#pickInfo b{color:var(--accent)}
+.c-top>*,.c-stat>div,.c-card,.pick,.opt>span:last-child,.c-option{min-width:0;overflow-wrap:anywhere}
+.c-top,.c-section,.c-meta,.c-practice-head{flex-wrap:wrap}
+.c-profile,.hud .lv{flex-shrink:0}
+.c-section h2{flex-shrink:0}
+.c-stat small{display:block;line-height:1.6}
+#picks{grid-template-columns:repeat(4,minmax(0,1fr))}
+#picks .pick.sel{transform:none}
+@media(max-width:700px){
+ #picks{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #picks .pick svg{height:110px}
+ #pickInfo{width:100%;font-size:14px;line-height:1.9;padding:16px}
+ #diffs{width:100%;display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+ #diffs .diff{width:100%;margin:0;line-height:1.5;padding:12px}
+ #diffs .diff em{font-size:12px;line-height:1.6}
+ .hud .nm{flex-wrap:wrap;line-height:1.5;gap:3px 6px}
+ .hud .nm>span{min-width:0;overflow-wrap:anywhere}
+ .stat{flex-wrap:wrap;gap:3px 8px;line-height:1.5}
+ .stat>span{white-space:nowrap}
+ #hudP,#hudE{width:calc(50% - 18px);max-width:none}
+ #eWeak,#eCharge{line-height:1.6;overflow-wrap:anywhere}
+ #opts{grid-template-columns:minmax(0,1fr)}
+ .opt{line-height:1.5;min-height:52px}
+ .opt .k{flex-shrink:0}
+ .c-card{display:grid;grid-template-columns:43px minmax(0,1fr) 16px;grid-template-rows:auto auto auto;column-gap:14px;row-gap:3px;padding:18px!important;align-content:center}
+ .c-card .c-icon{position:static;grid-column:1;grid-row:1 / span 3;align-self:start;margin:0}
+ .c-card strong,.c-card small{grid-column:2;margin:0;padding:0;line-height:1.6}
+ .c-card .c-arrow{position:static;grid-column:3;grid-row:1;align-self:start}
+ .c-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .c-stat{flex-direction:column;align-items:center;text-align:center;gap:5px}
+ .c-stat b{font-size:20px;line-height:1.4}
+ .c-stat small{font-size:11px}
+ .rowline{flex-wrap:wrap;gap:6px;line-height:1.6}
+ .cbar{min-width:30px}
+ #artOpts{flex-wrap:wrap}
+ #qwrap{padding-bottom:max(20px,env(safe-area-inset-bottom))}
+ #app{height:auto;min-height:100dvh;overflow:visible}
+ #scene{flex:none;height:310px;min-height:310px}
+ .screen,#scTitle,#cPractice{position:fixed}
+}
+
 </style>
 </head>
 <body>
